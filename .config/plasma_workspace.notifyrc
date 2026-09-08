@@ -1,0 +1,5 @@
+[Event/deviceAdded]
+Action=Sound
+
+[Event/deviceRemoved]
+Action=Sound

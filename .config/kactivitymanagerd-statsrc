@@ -1,0 +1,5 @@
+[Favorites-org.kde.plasma.kicker.favorites.instance-28-c9ba6224-b240-4408-a3a5-830607614b94]
+ordering=applications:systemsettings.desktop,applications:org.bleachbit.BleachBit.desktop,applications:octopi.desktop,applications:Aktualizacja Systemu.desktop,applications:org.kde.konsole.desktop,applications:btop.desktop,applications:virt-manager.desktop
+
+[Favorites-org.kde.plasma.kicker.favorites.instance-28-global]
+ordering=applications:systemsettings.desktop,applications:org.bleachbit.BleachBit.desktop,applications:octopi.desktop,applications:Aktualizacja Systemu.desktop,applications:org.kde.konsole.desktop,applications:btop.desktop,applications:virt-manager.desktop

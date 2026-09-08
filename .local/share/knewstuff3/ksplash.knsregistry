@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE khotnewstuff3>
+<hotnewstuffregistry>
+ <stuff category="716">
+  <name>Arch Simple Blue KDE 6</name>
+  <providerid>api.kde-look.org</providerid>
+  <author>kraken-afk</author>
+  <homepage>https://store.kde.org/p/2136517</homepage>
+  <licence></licence>
+  <version></version>
+  <rating>58</rating>
+  <downloads>87642</downloads>
+  <installedfile>/home/bartek/.local/share/plasma/look-and-feel/archsimpleblue/</installedfile>
+  <id>2136517</id>
+  <releasedate>2024-03-13</releasedate>
+  <summary>&lt;p>A simple blue Arch Linux logo for Plasma Splash-screen for KDE 6.&lt;br />Originally from &lt;a href="https://store.kde.org/p/1312961">https://store.kde.org/p/1312961&lt;/a>&lt;br />&lt;br /># Installation&lt;br />You can install it via System Settings or clone &lt;a href="https://github.com/kraken-afk/archsimpleblue">https://github.com/kraken-afk/archsimpleblue&lt;/a> into ~/.local/share/plasma/look-and-feel/&lt;/p></summary>
+  <changelog></changelog>
+  <preview>https://images.pling.com/cache/770x540-4/img/00/00/77/15/81/2136517/splash2.png</preview>
+  <previewBig>https://images.pling.com/cache/770x540-4/img/00/00/77/15/81/2136517/splash2.png</previewBig>
+  <payload>https://files06.pling.com/api/files/download/j/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MTcxMDI2MDk0NywibyI6IjEiLCJzIjoiNTRkOTY1NGRkOTg2NTQ1OThmZDhlM2U0ZTVkODIyMWFiMTM3OTczMjFlMzViOTc1Y2ViMTM0NDIxM2Y4ODdkYWRjZDg1MDgyYTAzMTE2MTczMDZjNjU1ZDQ3ZmE1ZGIyMGFkODU4MWRhYmQ3ZjBlMGI4MjAwYjA0NWUzNmU4NDkiLCJ0IjoxNzc1MTQ1MzA0LCJzdGZwIjpudWxsLCJzdGlwIjoiMTA5LjI0My41LjIzIn0.9bTw82aawgWY0jPtCRrbOaAdtb2u-3bkZ5sjbkRJn1c/archsimpleblue.tar.gz</payload>
+  <tags>arch,plasma,linux,kde,kde-plasma,lgplv3,efi,plasma##majorversion=6,theme,unix,splashscreen</tags>
+  <status>installed</status>
+ </stuff>
+</hotnewstuffregistry>

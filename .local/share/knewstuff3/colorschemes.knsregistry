@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE khotnewstuff3>
+<hotnewstuffregistry>
+ <stuff category="112">
+  <name>WhiteSur Color</name>
+  <providerid>api.kde-look.org</providerid>
+  <author>vinceliuice</author>
+  <homepage>https://store.kde.org/p/1398831</homepage>
+  <licence></licence>
+  <version></version>
+  <rating>50</rating>
+  <downloads>621242</downloads>
+  <installedfile>/home/bartek/.local/share/color-schemes/WhiteSur.colors</installedfile>
+  <installedfile>/home/bartek/.local/share/color-schemes/WhiteSurDark.colors</installedfile>
+  <installedfile>/home/bartek/.local/share/color-schemes/WhiteSurAlt.colors</installedfile>
+  <id>1398831</id>
+  <releasedate>2022-02-11</releasedate>
+  <summary>&lt;p>MacOS big sur theme for kde plasma&lt;/p></summary>
+  <changelog></changelog>
+  <preview>https://images.pling.com/cache/770x540-4/img/00/00/32/24/44/1398831/129887a42b22bb843754c81631903b901c02.png</preview>
+  <previewBig>https://images.pling.com/cache/770x540-4/img/00/00/32/24/44/1398831/129887a42b22bb843754c81631903b901c02.png</previewBig>
+  <payload>https://files06.pling.com/api/files/download/j/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MTY0NDU5MDg5MSwibyI6IjEiLCJzIjoiNDM1MzU0MmUxYjliMTU5ODY4ZmYyODU2YTYzZjZhM2JjYjBkOGFjYjI0MTg4Y2ZlNzdmMjk4MDY4Yjk5MGJhM2RjMzlmM2QzMWM4NDRiNzExNjBhMjlhNjM2OGJjYTM1OGYwYjgwYjMyMDJiMjFmMjY3YzJiYmE3ODI3NTU0YmYiLCJ0IjoxNzc1MTYzNTM1LCJzdGZwIjpudWxsLCJzdGlwIjoiMTA5LjI0My41LjIzIn0.AVYCQaHZHIRQhDKj9venr_YjJjknrNlC8dhTbSMIIK0/WhiteSur.tar.gz</payload>
+  <tags>kde,linux,unix,theme,original-product,plasma,colorscheme,gplv3</tags>
+  <status>installed</status>
+ </stuff>
+ <stuff category="112">
+  <name>Apple MacOS Sequoia</name>
+  <providerid>api.kde-look.org</providerid>
+  <author>vinceliuice</author>
+  <homepage>https://store.kde.org/p/2170936</homepage>
+  <licence></licence>
+  <version></version>
+  <rating>50</rating>
+  <downloads>23820</downloads>
+  <installedfile>/home/bartek/.local/share/color-schemes/MacSequoiaDark.colors</installedfile>
+  <installedfile>/home/bartek/.local/share/color-schemes/MacSequoiaLight.colors</installedfile>
+  <id>2170936</id>
+  <releasedate>2024-06-30</releasedate>
+  <summary>&lt;p>Apple MacOS Sequoia theme for KDE Plasma&lt;/p></summary>
+  <changelog></changelog>
+  <preview>https://images.pling.com/cache/770x540-4/img/00/00/32/24/44/2170936/g4.png</preview>
+  <previewBig>https://images.pling.com/cache/770x540-4/img/00/00/32/24/44/2170936/g4.png</previewBig>
+  <payload>https://files06.pling.com/api/files/download/j/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MTcxOTc2ODI4NiwibyI6IjEiLCJzIjoiMTJiZjIyZmIzNjI1M2NmZmE1YmQ0ZDIyNzQzZDdlYjQzYjA2N2M2M2ZlZTJjOWJmYmNlZTgyZTBmMWRhMWRkOTczMWE2NDk0YTgxMzlkMGUzNDJlZDUzNDU2MWNjNTA5ZTYxNDI3MWJjNzEyYjQwNjQyYTlmZWUxOWYwZmRkMzMiLCJ0IjoxNzc1Mjk4ODUyLCJzdGZwIjpudWxsLCJzdGlwIjoiMTA5LjI0My41LjIzIn0.RuvU6bTkQDBFz92_-Xy3_zvk00e12g4m0ILzzUa92Sk/MacSequoia.tar.gz</payload>
+  <tags>gplv3,colorscheme,linux,kde,unix,theme,plasma,original-product</tags>
+  <status>installed</status>
+ </stuff>
+</hotnewstuffregistry>

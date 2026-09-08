@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE khotnewstuff3>
+<hotnewstuffregistry>
+ <stuff category="132">
+  <name>McMojave-circle</name>
+  <providerid>api.kde-look.org</providerid>
+  <author>vinceliuice</author>
+  <homepage>https://store.kde.org/p/1305429</homepage>
+  <licence></licence>
+  <version></version>
+  <rating>92</rating>
+  <downloads>1585262</downloads>
+  <installedfile>/home/bartek/.local/share/icons/McMojave-circle-purple/*</installedfile>
+  <installedfile>/home/bartek/.local/share/icons/McMojave-circle-purple-dark/*</installedfile>
+  <installedfile>/home/bartek/.local/share/icons/McMojave-circle-purple-light/*</installedfile>
+  <id>1305429</id>
+  <releasedate>2025-12-08</releasedate>
+  <summary>&lt;p>MacOSX Mojave like circle icon theme for linux desktops&lt;br />--------------------------&lt;br />Based on OSX_ONE: &lt;a href="https://github.com/unc926/OSX_ONE">&lt;/a>&lt;a href="https://github.com/unc926/OSX_ONE">https://github.com/unc926/OSX_ONE&lt;/a>&lt;br />--------------------------&lt;br />&lt;b>You can use this with:&lt;/b>&lt;br />--------------------------&lt;br />&lt;b>GTK theme&lt;/b>&lt;br />Mojave-gtk-theme: &lt;a href="https://www.pling.com/p/1275087/">&lt;/a>&lt;a href="https://www.pling.com/p/1275087/">https://www.pling.com/p/1275087/&lt;/a>&lt;br />&lt;br />&lt;b>KDE theme&lt;/b>&lt;br />McMojave-kde: &lt;a href="https://www.pling.com/p/1304936/">&lt;/a>&lt;a href="https://www.pling.com/p/1304936/">https://www.pling.com/p/1304936/&lt;/a>&lt;br />&lt;br />&lt;b>Folder-color&lt;/b>&lt;br />Folder-color: &lt;a href="http://foldercolor.tuxfamily.org">&lt;/a>&lt;a href="http://foldercolor.tuxfamily.org">http://foldercolor.tuxfamily.org&lt;/a>&lt;br />--------------------------&lt;br />&lt;b>Info&lt;/b>&lt;br />--------------------------&lt;br />This theme use &lt;b>numix-icon-theme-circle&lt;/b> for Inherits&lt;br />so if you want a better experience you can install numix-circle&lt;br />&lt;br />&lt;b>numix-icon-theme-circle&lt;/b> :&lt;br />&lt;a href="https://github.com/numixproject/numix-icon-theme-circle">&lt;/a>&lt;a href="https://github.com/numixproject/numix-icon-theme-circle">https://github.com/numixproject/numix-icon-theme-circle&lt;/a>&lt;/p></summary>
+  <changelog></changelog>
+  <preview>https://images.pling.com/cache/770x540-4/img/00/00/32/24/44/1305429/088a401b6c0998d484a63f7b5036ea945206.png</preview>
+  <previewBig>https://images.pling.com/cache/770x540-4/img/00/00/32/24/44/1305429/088a401b6c0998d484a63f7b5036ea945206.png</previewBig>
+  <payload>https://files06.pling.com/api/files/download/j/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MTc2NTE5NDk0NywibyI6IjEiLCJzIjoiYTVkYzZiNWJkMzc4Y2VhOWYxYzA0ZDVmZjljZDc3ZjIyNDZkZGU5ZmMxMTgzYzI0Nzk3MDRmOTdiYzJjZmViMGNlMGQ1Zjg2MWRiOWNlYjVjMmNhNGEwYjE2MDk0ZGMwZGFjZGExZGIxNTUxMTU4ZmFhYjYyMzY3NDI5ZjIwZWEiLCJ0IjoxNzc1Mjk4NTM2LCJzdGZwIjpudWxsLCJzdGlwIjoiMTA5LjI0My41LjIzIn0.cX_re1jTryu8ZJiQoBnbMKNRSCqaS12iaLiGe9lxC5A/McMojave-circle-purple.tar.xz</payload>
+  <tags>unix,linux,icon-theme,gplv3</tags>
+  <status>installed</status>
+ </stuff>
+</hotnewstuffregistry>

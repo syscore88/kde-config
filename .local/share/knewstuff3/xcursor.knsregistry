@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE khotnewstuff3>
+<hotnewstuffregistry>
+ <stuff category="107">
+  <name>WhiteSur cursors</name>
+  <providerid>api.kde-look.org</providerid>
+  <author>vinceliuice</author>
+  <homepage>https://store.kde.org/p/1411743</homepage>
+  <licence></licence>
+  <version></version>
+  <rating>86</rating>
+  <downloads>1021250</downloads>
+  <installedfile>/home/bartek/.icons/WhiteSur-cursors/*</installedfile>
+  <id>1411743</id>
+  <releasedate>2020-08-12</releasedate>
+  <summary>&lt;p>WhiteSur cursors&lt;/p></summary>
+  <changelog></changelog>
+  <preview>https://images.pling.com/cache/770x540-4/img/00/00/32/24/44/1411743/f09b709b76cbcaa053dcb9a3c84d0ed845c25f24870a3af83977f89b43ca00da11b9.png</preview>
+  <previewBig>https://images.pling.com/cache/770x540-4/img/00/00/32/24/44/1411743/f09b709b76cbcaa053dcb9a3c84d0ed845c25f24870a3af83977f89b43ca00da11b9.png</previewBig>
+  <payload>https://files06.pling.com/api/files/download/j/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MTU5NzIxOTU1MCwibyI6IjEiLCJzIjoiY2M0NzJjZTNhMDA5ZmYyNDU1NTMxMzI1NTA3ODc2YWM5MTIyMzg2YTMwOWIzNzRiYjllNDRjYjZmMTA0NDkwYTJhZjkyMGVjZmNlYTNlNDU1OWJkMmRiNTJhYjA4ZGExNDRjYjcyMjg4MGU1MjUyZGEwOTVmYWJmNTEzMWY4ZDAiLCJ0IjoxNzc1MTQ1MjY0LCJzdGZwIjpudWxsLCJzdGlwIjoiMTA5LjI0My41LjIzIn0.e14m7cag17ZVVeH1PaSjP05trIoKCm67m3_hJbfAPBk/WhiteSur-cursors.tar.xz</payload>
+  <tags>original-product,linux,gplv3,cursor,unix</tags>
+  <status>installed</status>
+ </stuff>
+ <stuff category="107">
+  <name>We10XOS cursors</name>
+  <providerid>api.kde-look.org</providerid>
+  <author>yeyushengfan258</author>
+  <homepage>https://store.kde.org/p/1381208</homepage>
+  <licence></licence>
+  <version></version>
+  <rating>82</rating>
+  <downloads>153549</downloads>
+  <installedfile>/home/bartek/.icons/We10XOS-cursors/*</installedfile>
+  <id>1381208</id>
+  <releasedate>2026-03-17</releasedate>
+  <summary>&lt;p>We10XOS cursors for linux desktops&lt;br />This is an x-cursor theme inspired by WinOS &lt;br />based on capitaine-cursors&lt;a href="https://github.com/keeferrourke/capitaine-cursors">&lt;/a>&lt;a href="https://github.com/keeferrourke/capitaine-cursors">https://github.com/keeferrourke/capitaine-cursors&lt;/a>&lt;/p></summary>
+  <changelog></changelog>
+  <preview>https://images.pling.com/cache/770x540-4/img/00/00/54/79/90/1381208/c16de0d4feab8568339ca8af96635c6d8d1d.png</preview>
+  <previewBig>https://images.pling.com/cache/770x540-4/img/00/00/54/79/90/1381208/c16de0d4feab8568339ca8af96635c6d8d1d.png</previewBig>
+  <payload>https://files06.pling.com/api/files/download/j/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MTYwNDM5OTc0MSwibyI6IjEiLCJzIjoiMzEzOTQyYjg3ZTQ0NDcyYmJkOGQ3YTRkMDRmMzgyNWFmYTM5MWUwMDE2NjYxZDVhZDNiNTQ4ZGY0N2FhMTViM2EyOWEzODcyOWU0MzA3MmFlZGNhZGFlNzAxZWJiZWVjYmRlNzI2YjM2YTJhYTk1ZDMxYmUxNzIzMjI5ZDhlNTciLCJ0IjoxNzc1MTY0NTUxLCJzdGZwIjpudWxsLCJzdGlwIjoiMTA5LjI0My41LjIzIn0.nmrVI0xt5ZT8hJVgCtejWLBFSMsV1jU1u8CbYJrCXig/We10XOS-cursors.tar.gz</payload>
+  <tags>unix,cursor,linux,gplv3</tags>
+  <status>installed</status>
+ </stuff>
+</hotnewstuffregistry>

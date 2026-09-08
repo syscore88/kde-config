@@ -1,0 +1,7 @@
+[Common]
+OutlineCloseButton=true
+ShadowColor=51,0,255
+ShadowSize=ShadowVeryLarge
+
+[Style]
+MenuOpacity=65 

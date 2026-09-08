@@ -1,0 +1,6 @@
+[Libinput][12538][1024][USB Optical Mouse ]
+PointerAcceleration=0.200
+
+[Libinput][1267][12490][DELL08BC:00 04F3:30CA Touchpad]
+DisableEventsOnExternalMouse=true
+PointerAcceleration=0.200

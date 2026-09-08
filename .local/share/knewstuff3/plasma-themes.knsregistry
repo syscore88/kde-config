@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE khotnewstuff3>
+<hotnewstuffregistry>
+ <stuff category="104">
+  <name>Apple MacOS [WhiteSur-dark] plasma</name>
+  <providerid>api.kde-look.org</providerid>
+  <author>vinceliuice</author>
+  <homepage>https://store.kde.org/p/1400409</homepage>
+  <licence></licence>
+  <version></version>
+  <rating>82</rating>
+  <downloads>817716</downloads>
+  <installedfile>/home/bartek/.local/share/plasma/desktoptheme/WhiteSur-dark/</installedfile>
+  <id>1400409</id>
+  <releasedate>2025-11-05</releasedate>
+  <summary>&lt;p>MacOS theme for kde plasma&lt;br />-----------------------&lt;br />&lt;b>Kvantum theme:&lt;/b> &lt;a href="https://www.pling.com/p/1398841/">&lt;/a>&lt;a href="https://www.pling.com/p/1398841/">https://www.pling.com/p/1398841/&lt;/a>&lt;br />-----------------------&lt;br />&lt;b>Icon theme:&lt;/b> &lt;a href="https://www.pling.com/p/1405756/">&lt;/a>&lt;a href="https://www.pling.com/p/1405756/">https://www.pling.com/p/1405756/&lt;/a>&lt;br />-----------------------&lt;br />&lt;b>Cursors theme:&lt;/b> &lt;a href="https://www.pling.com/p/1355701/">&lt;/a>&lt;a href="https://www.pling.com/p/1355701/">https://www.pling.com/p/1355701/&lt;/a>&lt;br />-----------------------&lt;br />&lt;b>Wallpaper:&lt;/b> &lt;a href="https://www.pling.com/p/1398833/">&lt;/a>&lt;a href="https://www.pling.com/p/1398833/">https://www.pling.com/p/1398833/&lt;/a>&lt;/p></summary>
+  <changelog></changelog>
+  <preview>https://images.pling.com/cache/770x540-4/img/00/00/32/24/44/1400409/3e7b3166dbee0a004ed4a44a7e17218fbb19.png</preview>
+  <previewBig>https://images.pling.com/cache/770x540-4/img/00/00/32/24/44/1400409/3e7b3166dbee0a004ed4a44a7e17218fbb19.png</previewBig>
+  <payload>https://files06.pling.com/api/files/download/j/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MTc2MjM1MjIxOSwibyI6IjEiLCJzIjoiMzMzMTc3YWJiODAzNzk3ZjNkNjE5YzQ5YTE2ZDUzNTc4MjBhYTI2ZWRmZDZlMjRiNGIwNzAxOTRiMDVmNmZkMWY4YTIxNDIxYTVlMDFjOTdjOWE5MjBhMTA0OTZlYWQxMzM0ODczZTAwZmYwOGRiNDUzY2E1YTc0YWI1NjMxNGQiLCJ0IjoxNzc1Mjk5MjA4LCJzdGZwIjpudWxsLCJzdGlwIjoiMTA5LjI0My41LjIzIn0.uWBqaynL-JJqpUnOB6q131DHguGS_PYlOlxWRRHZZ2I/WhiteSur-dark.tar.gz</payload>
+  <tags>plasma,original-product,theme,unix,gplv3,kde,linux</tags>
+  <status>installed</status>
+ </stuff>
+ <stuff category="104">
+  <name>Apple MacOS Sonoma Light</name>
+  <providerid>api.kde-look.org</providerid>
+  <author>vinceliuice</author>
+  <homepage>https://store.kde.org/p/2053176</homepage>
+  <licence></licence>
+  <version></version>
+  <rating>50</rating>
+  <downloads>27655</downloads>
+  <installedfile>/home/bartek/.local/share/plasma/desktoptheme/MacSonoma-Light/</installedfile>
+  <id>2053176</id>
+  <releasedate>2025-10-17</releasedate>
+  <summary>&lt;p>MacSonoma Plasma Light theme&lt;/p></summary>
+  <changelog></changelog>
+  <preview>https://images.pling.com/cache/770x540-4/img/00/00/32/24/44/2053176/g1148.png</preview>
+  <previewBig>https://images.pling.com/cache/770x540-4/img/00/00/32/24/44/2053176/g1148.png</previewBig>
+  <payload>https://files06.pling.com/api/files/download/j/eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MTc2MDcxMDU4NSwibyI6IjEiLCJzIjoiODA2MjQ4ZWM0OGIzNmExZGRlMzM1ZTZjNDViOWVkZTlmZDAxMzM2MmU1OTAxMGRkOTViMDAyMzY1Zjc4ZmM1YTZiNGUwMmRhZWRiMGFkNGRhYzM5N2M1YThiMDI5ZDVkNjEwMDc1MDZkYTdiYzdhMmQ2NjJkZTNiYzQwZjIwNTciLCJ0IjoxNzc1Mjk4NTk5LCJzdGZwIjpudWxsLCJzdGlwIjoiMTA5LjI0My41LjIzIn0.ow1Xpa3PkIDxfrQRrB12fJMNmFiAFimBq8FyLjEzlAc/MacSonoma-Light.tar.gz</payload>
+  <tags>theme,unix,original-product,plasma,gplv3,linux,kde</tags>
+  <status>installed</status>
+ </stuff>
+</hotnewstuffregistry>

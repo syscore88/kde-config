@@ -1,0 +1,32 @@
+[Confirmations]
+ConfirmEmptyTrash=false
+
+[IconsMode]
+VisibleRoles=size,modificationtime
+HighlightEntireRow=false
+LeftPadding=0
+RightPadding=0
+
+[DetailsMode]
+HighlightEntireRow=false
+LeftPadding=0
+RightPadding=0
+
+[General]
+DynamicView=true
+ShowStatusBar=FullWidth
+ShowZoomSlider=true
+SortingChoice=CaseInsensitiveSorting
+Version=202
+ViewPropsTimestamp=2026,4,3,12,25,29.814
+
+[KFileDialog Settings]
+Places Icons Auto-resize=false
+Places Icons Static Size=22
+
+[Notification Messages]
+ConfirmHide=false
+warnAboutRisksBeforeActingAsAdmin=false
+
+[PreviewSettings]
+Plugins=appimagethumbnail,opendocumentthumbnail,kraorathumbnail,ebookthumbnail,directorythumbnail,comicbookthumbnail,mltpreview,glycin-heif,glycin-image-rs,glycin-jxl,glycin-svg,imagethumbnail,exrthumbnail,jpegthumbnail,windowsimagethumbnail,svgthumbnail,fontthumbnail,djvuthumbnail,audiothumbnail,cursorthumbnail,windowsexethumbnail,exe-thumbnailer
