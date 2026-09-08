@@ -4,7 +4,7 @@
   <Merge type="menus"/>
   <Menuname>Office</Menuname>
   <Menuname>Graphics</Menuname>
-  <Menuname>Games</Menuname> 
+  <Menuname>Games</Menuname>
   <Menuname>Internet</Menuname>
   <Menuname>Multimedia</Menuname>
   <Menuname>Utilities</Menuname>
@@ -110,6 +110,7 @@
    <Filename>org.kde.kwrite.desktop</Filename>
    <Filename>vim.desktop</Filename>
    <Filename>org.bleachbit.BleachBit.desktop</Filename>
+   <Filename>com.shellyorg.shelly.desktop</Filename>
   </Exclude>
   <Menu>
    <Name>XUtilities</Name>
@@ -121,7 +122,6 @@
    <Filename>com.github.tchx84.Flatseal.desktop</Filename>
    <Filename>org.kde.kate.desktop</Filename>
    <Filename>ai.opencode.desktop.desktop</Filename>
-   <Filename>com.shellyorg.shelly.desktop</Filename>
    <Filename>org.kde.spectacle.desktop</Filename>
    <Filename>org.kde.plasma.emojier.desktop</Filename>
    <Filename>ventoy.desktop</Filename>
@@ -136,12 +136,10 @@
    <Filename>lstopo.desktop</Filename>
    <Filename>org.kde.kinfocenter.desktop</Filename>
    <Filename>avahi-discover.desktop</Filename>
-   <Filename>com.shellyorg.shelly.desktop</Filename>
   </Exclude>
   <Layout>
    <Merge type="files"/>
    <Filename>org.bleachbit.BleachBit.desktop</Filename>
-   <Filename>gay.pancake.lsfg-vk-ui.desktop</Filename>
    <Filename>org.kde.dolphin.desktop</Filename>
    <Filename>ca.desrt.dconf-editor.desktop</Filename>
    <Filename>org.kde.kmenuedit.desktop</Filename>
@@ -151,6 +149,7 @@
    <Merge type="menus"/>
    <Menuname>Terminal</Menuname>
    <Menuname>ScreenSavers</Menuname>
+   <Filename>com.shellyorg.shelly.desktop</Filename>
    <Filename>timeshift-gtk.desktop</Filename>
    <Filename>systemsettings.desktop</Filename>
    <Menuname>More</Menuname>
@@ -159,6 +158,9 @@
    <Filename>org.kde.partitionmanager.desktop</Filename>
    <Filename>net.nokyan.Resources.desktop</Filename>
   </Layout>
+  <Include>
+   <Filename>com.shellyorg.shelly.desktop</Filename>
+  </Include>
  </Menu>
  <Menu>
   <Name>Development</Name>
