@@ -137,9 +137,13 @@
    <Filename>org.kde.kinfocenter.desktop</Filename>
    <Filename>avahi-discover.desktop</Filename>
   </Exclude>
+  <Include>
+   <Filename>com.shellyorg.shelly.desktop</Filename>
+  </Include>
   <Layout>
    <Merge type="files"/>
    <Filename>org.bleachbit.BleachBit.desktop</Filename>
+   <Filename>gay.pancake.lsfg-vk-ui.desktop</Filename>
    <Filename>org.kde.dolphin.desktop</Filename>
    <Filename>ca.desrt.dconf-editor.desktop</Filename>
    <Filename>org.kde.kmenuedit.desktop</Filename>
@@ -158,9 +162,6 @@
    <Filename>org.kde.partitionmanager.desktop</Filename>
    <Filename>net.nokyan.Resources.desktop</Filename>
   </Layout>
-  <Include>
-   <Filename>com.shellyorg.shelly.desktop</Filename>
-  </Include>
  </Menu>
  <Menu>
   <Name>Development</Name>
