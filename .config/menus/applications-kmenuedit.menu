@@ -35,6 +35,9 @@
  </Menu>
  <Menu>
   <Name>Graphics</Name>
+  <Exclude>
+   <Filename>org.kde.okular.desktop</Filename>
+  </Exclude>
   <Layout>
    <Merge type="files"/>
    <Filename>gimp.desktop</Filename>
@@ -45,15 +48,11 @@
    <Merge type="menus"/>
    <Menuname>More</Menuname>
   </Layout>
-  <Exclude>
-   <Filename>org.kde.okular.desktop</Filename>
-  </Exclude>
  </Menu>
  <Menu>
   <Name>Games</Name>
   <Layout>
    <Merge type="files"/>
-   <Filename>io.github.Faugus.faugus-launcher.desktop</Filename>
    <Filename>io.github.benjamimgois.goverlay.desktop</Filename>
    <Merge type="menus"/>
    <Menuname>Kidsgames</Menuname>
@@ -62,6 +61,7 @@
    <Menuname>Board</Menuname>
    <Menuname>TacticStrategy</Menuname>
    <Menuname>Arcade</Menuname>
+   <Filename>heroic.desktop</Filename>
   </Layout>
  </Menu>
  <Menu>
@@ -143,8 +143,7 @@
   <Layout>
    <Merge type="files"/>
    <Filename>org.bleachbit.BleachBit.desktop</Filename>
-   <Filename>BleachBit (SUDO).desktop</Filename>
-   <Filename>gay.pancake.lsfg-vk-ui.desktop</Filename>
+   <Filename>BleachBit(SUDO).desktop</Filename>
    <Filename>org.kde.dolphin.desktop</Filename>
    <Filename>ca.desrt.dconf-editor.desktop</Filename>
    <Filename>org.kde.kmenuedit.desktop</Filename>
