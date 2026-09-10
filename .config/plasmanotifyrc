@@ -15,6 +15,12 @@ ShowBadges=false
 ShowInHistory=false
 ShowPopups=false
 
+[Applications][heroic]
+Seen=true
+ShowBadges=false
+ShowInHistory=false
+ShowPopups=false
+
 [Applications][org.bleachbit.BleachBit]
 ShowBadges=false
 ShowInHistory=false
