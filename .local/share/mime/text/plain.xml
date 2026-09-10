@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mime-type xmlns="http://www.freedesktop.org/standards/shared-mime-info" type="text/plain">
+  <!--Created automatically by update-mime-database. DO NOT EDIT!-->
+  <comment>Zwykły dokument tekstowy</comment>
+  <icon name="image-x-djvu"/>
+  <glob-deleteall/>
+  <glob pattern="*,v"/>
+  <glob pattern="*.asc"/>
+  <glob pattern="*.txt"/>
+</mime-type>
