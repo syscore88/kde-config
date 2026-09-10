@@ -24,7 +24,6 @@ audio/x-vorbis+ogg=qmmp.desktop;elisa.desktop;
 message/rfc822=userapp-Thunderbird-GCCLS3.desktop;userapp-Thunderbird-3VQ4T3.desktop;
 text/calendar=userapp-Thunderbird-GDYNS3.desktop;userapp-Thunderbird-HFZ6T3.desktop;
 text/x-ms-regedit=org.kde.kate.desktop;io.github.Faugus.faugus-launcher.shortcut.desktop;io.github.Faugus.faugus-launcher.desktop;org.kde.kwrite.desktop;okularApplication_txt.desktop;libreoffice-writer.desktop;
-text/x-shellscript=org.kde.kate.desktop;
 video/3gp=vlc.desktop;
 video/3gpp=vlc.desktop;
 video/3gpp2=vlc.desktop;
@@ -94,7 +93,7 @@ audio/x-vorbis=qmmp.desktop;
 audio/x-vorbis+ogg=qmmp.desktop;
 message/rfc822=userapp-Thunderbird-3VQ4T3.desktop
 text/calendar=userapp-Thunderbird-HFZ6T3.desktop
-text/html=org.kde.kate.desktop;
+text/html=google-chrome.desktop
 text/x-ms-regedit=org.kde.kate.desktop;
 video/3gp=vlc.desktop;
 video/3gpp=vlc.desktop;
@@ -141,3 +140,6 @@ x-scheme-handler/tg=org.telegram.desktop.desktop
 x-scheme-handler/tonsite=org.telegram.desktop.desktop
 x-scheme-handler/webcal=userapp-Thunderbird-HFZ6T3.desktop
 x-scheme-handler/webcals=userapp-Thunderbird-HFZ6T3.desktop
+
+[Removed Associations]
+text/x-shellscript=vim.desktop;Konsola.desktop;
