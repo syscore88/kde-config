@@ -53,7 +53,7 @@
   <Name>Games</Name>
   <Layout>
    <Merge type="files"/>
-   <Filename>io.github.benjamimgois.goverlay.desktop</Filename>
+   <Filename>io.github.Faugus.faugus-launcher.desktop</Filename>
    <Merge type="menus"/>
    <Menuname>Kidsgames</Menuname>
    <Menuname>Card</Menuname>
@@ -61,7 +61,6 @@
    <Menuname>Board</Menuname>
    <Menuname>TacticStrategy</Menuname>
    <Menuname>Arcade</Menuname>
-   <Filename>heroic.desktop</Filename>
   </Layout>
  </Menu>
  <Menu>
@@ -144,6 +143,7 @@
    <Merge type="files"/>
    <Filename>org.bleachbit.BleachBit.desktop</Filename>
    <Filename>BleachBit(SUDO).desktop</Filename>
+   <Filename>gay.pancake.lsfg-vk-ui.desktop</Filename>
    <Filename>org.kde.dolphin.desktop</Filename>
    <Filename>ca.desrt.dconf-editor.desktop</Filename>
    <Filename>org.kde.kmenuedit.desktop</Filename>
