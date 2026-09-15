@@ -87,7 +87,8 @@ chmod +x install.sh
 ./install.sh
 ```
 ---
-<img width="1920" height="1080" alt="Zrzut ekranu_20260716_191008" src="https://github.com/user-attachments/assets/15eafeed-a1aa-4351-bbc1-46c0c231a1a6" />
+<img width="1920" height="1080" alt="Zrzut ekranu_20260915_202411" src="https://github.com/user-attachments/assets/9e4e2dbe-8267-478b-ae59-cc132e1ce962" />
+
 
 ### ☕ Support the Project
 
