@@ -159,7 +159,7 @@ PACKAGES=(
     kde-gtk-config kinfocenter kio-admin kdeplasma-addons
     aspell-pl kaccounts-providers dolphin konsole
     dolphin-plugins spectacle gwenview okular ark kate
-    plymouth-kcm resources
+    plymouth-kcm plasma-systemmonitor
 )
 
 declare -A PACKAGE_NAME_OVERRIDES=(
