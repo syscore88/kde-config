@@ -74,6 +74,7 @@ chartFace=org.kde.ksysguard.applicationstable
 showTitle=true
 
 [Face-108592549200736][org.kde.ksysguard.applicationstable][General]
+showDetails=
 showToolBar=true
 
 [Face-94027687102352][Appearance]
@@ -207,21 +208,5 @@ showBackground=true
 
 [page][row-2][column-0][section-0]
 face=Face-108592549200736
-isSeparator=false
-name=section-0
-
-[page][row-3]
-Title=
-heightMode=balanced
-isTitle=false
-name=row-3
-
-[page][row-3][column-0]
-name=column-0
-noMargins=false
-showBackground=true
-
-[page][row-3][column-0][section-0]
-face=Face-94027687102352
 isSeparator=false
 name=section-0
