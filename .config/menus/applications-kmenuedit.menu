@@ -150,6 +150,7 @@
    <Filename>System_Maintenance.desktop</Filename>
    <Filename>org.kde.konsole.desktop</Filename>
    <Filename>virt-manager.desktop</Filename>
+   <Filename>org.kde.plasma-systemmonitor.desktop</Filename>
    <Merge type="menus"/>
    <Menuname>Terminal</Menuname>
    <Menuname>ScreenSavers</Menuname>
@@ -160,7 +161,6 @@
    <Filename>nm-connection-editor.desktop</Filename>
    <Filename>cups.desktop</Filename>
    <Filename>org.kde.partitionmanager.desktop</Filename>
-   <Filename>net.nokyan.Resources.desktop</Filename>
   </Layout>
  </Menu>
  <Menu>
