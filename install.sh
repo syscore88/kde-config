@@ -104,13 +104,15 @@ show_progress() {
 }
 
 if [[ "$SCRIPT_LANG" == "pl" ]]; then
-    MSG_PHASE_1="[1/3] Wykrywanie dystrybucji i konfiguracja uprawnień..."
-    MSG_PHASE_2="[2/3] Instalacja i weryfikacja pakietów KDE Plasma..."
-    MSG_PHASE_3="[3/3] Konfiguracja środowiska, tapety i ustawień wizualnych..."
+    MSG_PREP="Przygotowywanie..."
+    MSG_INSTALL="Instalacja..."
+    MSG_OPTIMIZE="Optymalizacja..."
+    MSG_FINALIZE="Finalizowanie..."
 else
-    MSG_PHASE_1="[1/3] Detecting distribution and configuring permissions..."
-    MSG_PHASE_2="[2/3] Installing and verifying KDE Plasma packages..."
-    MSG_PHASE_3="[3/3] Configuring environment, wallpaper, and visual settings..."
+    MSG_PREP="Preparing..."
+    MSG_INSTALL="Installation..."
+    MSG_OPTIMIZE="Optimization..."
+    MSG_FINALIZE="Finalizing..."
 fi
 
 TOTAL_STEPS=12
@@ -139,7 +141,7 @@ SUDO_KEEPALIVE_PID=$!
 # ==========================================================
 # 1. WSTĘPNE SPRAWDZENIA I UPRAWNIENIA
 # ==========================================================
-show_progress 0 $TOTAL_STEPS "$MSG_PHASE_1"
+show_progress 0 $TOTAL_STEPS "$MSG_PREP"
 
 printf '\033[?7h' >&3
 if [[ "$USE_RUN0" -eq 1 ]]; then
@@ -171,7 +173,7 @@ fi
 
 printf '\033[?7l' >&3
 
-show_progress 1 $TOTAL_STEPS "$MSG_PHASE_1"
+show_progress 1 $TOTAL_STEPS "$MSG_PREP"
 
 # ==========================================================
 # 2. WYKRYWANIE DYSTRYBUCJI I INSTALACJA PAKIETÓW
@@ -262,9 +264,9 @@ add_opensuse_kde_frameworks_repo() {
 }
 
 detect_distro
-show_progress 2 $TOTAL_STEPS "$MSG_PHASE_1"
+show_progress 2 $TOTAL_STEPS "$MSG_PREP"
 
-show_progress 3 $TOTAL_STEPS "$MSG_PHASE_2"
+show_progress 3 $TOTAL_STEPS "$MSG_INSTALL"
 
 install_packages() {
     if [[ "$DISTRO_FAMILY" == "debian" ]]; then
@@ -273,7 +275,7 @@ install_packages() {
         add_opensuse_kde_frameworks_repo
     fi
 
-    show_progress 4 $TOTAL_STEPS "$MSG_PHASE_2"
+    show_progress 4 $TOTAL_STEPS "$MSG_INSTALL"
 
     local installed=()
     local canonical real_name
@@ -287,7 +289,7 @@ install_packages() {
         fi
     done
 
-    show_progress 5 $TOTAL_STEPS "$MSG_PHASE_2"
+    show_progress 5 $TOTAL_STEPS "$MSG_INSTALL"
 
     if [[ ${#FAILED_PACKAGES[@]} -gt 0 ]]; then
         log_warn "Nie udało się zainstalować: ${FAILED_PACKAGES[*]}" \
@@ -296,12 +298,12 @@ install_packages() {
 }
 
 install_packages
-show_progress 6 $TOTAL_STEPS "$MSG_PHASE_2"
+show_progress 6 $TOTAL_STEPS "$MSG_INSTALL"
 
 # ==========================================================
 # 3. KONFIGURACJA SYSTEMOWA (SUDO)
 # ==========================================================
-show_progress 7 $TOTAL_STEPS "$MSG_PHASE_3"
+show_progress 7 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
 if [[ -f "$SCRIPT_DIR/piwo.png" ]]; then
     sudo mkdir -p /usr/share/plasma/avatars/ || true
@@ -359,7 +361,7 @@ fi
 TARGET_DIR="$HOME/.local/share/wallpapers"
 mkdir -p "$TARGET_DIR"
 
-show_progress 8 $TOTAL_STEPS "$MSG_PHASE_3"
+show_progress 8 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
 # ==========================================================
 # 4. KONFIGURACJA WIZUALNA (KONTO UŻYTKOWNIKA)
@@ -368,7 +370,7 @@ systemctl --user stop plasma-plasmashell.service 2>/dev/null || true
 kquitapp6 plasmashell 2>/dev/null || killall -9 plasmashell 2>/dev/null || true
 sleep 2
 
-show_progress 9 $TOTAL_STEPS "$MSG_PHASE_3"
+show_progress 9 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
 if [[ -d "$SCRIPT_DIR/.config" ]]; then cp -af "$SCRIPT_DIR/.config/." ~/.config/; fi
 if [[ -d "$SCRIPT_DIR/.local" ]]; then cp -af "$SCRIPT_DIR/.local/." ~/.local/; fi
@@ -399,7 +401,7 @@ if [[ -f "$LOCKSCREEN_WALLPAPER_PATH" ]]; then
     chmod 644 "$LOCKSCREEN_CONF" || true
 fi
 
-show_progress 10 $TOTAL_STEPS "$MSG_PHASE_3"
+show_progress 10 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
 rm -rf ~/.cache/icon-cache.kcache ~/.cache/plasma* ~/.cache/ico*
 
@@ -418,7 +420,7 @@ X-KDE-autostart-condition=
 EOF
 chmod +x "$AUTOSTART_DIR/force-wallpaper.desktop"
 
-show_progress 11 $TOTAL_STEPS "$MSG_PHASE_3"
+show_progress 11 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
 if command -v kbuildsycoca6 &>/dev/null; then
     kbuildsycoca6 --noincremental &>/dev/null || true
@@ -434,7 +436,7 @@ else
     sudo rm -f /etc/sudoers.d/99-temp-installer
 fi
 
-show_progress 12 $TOTAL_STEPS "$MSG_PHASE_3"
+show_progress 12 $TOTAL_STEPS "$MSG_FINALIZE"
 echo -e "\n" >&3
 
 if [[ "$SCRIPT_LANG" == "pl" ]]; then
