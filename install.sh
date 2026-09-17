@@ -124,11 +124,6 @@ if [[ "$EUID" -eq 0 ]]; then
     exit 1
 fi
 
-if [[ "$SCRIPT_LANG" == "pl" ]]; then
-    echo -e "${INFO}==> Może zostać wyświetlona prośba o podanie hasła sudo.${NC}" >&3
-else
-    echo -e "${INFO}==> You may be asked for your sudo password below.${NC}" >&3
-fi
 sudo -v
 
 RUN0_NOPASSWD_FILE="/etc/polkit-1/rules.d/51-run0-nopasswd.rules"
