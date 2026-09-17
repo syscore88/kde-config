@@ -116,7 +116,6 @@ fi
 TOTAL_STEPS=12
 
 CURRENT_USER=$(whoami)
-OLD_USER_PLACEHOLDER="bartek"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ "$EUID" -eq 0 ]]; then
