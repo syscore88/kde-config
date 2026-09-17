@@ -6,6 +6,11 @@
 set -Eeuo pipefail 
 export PATH="/usr/sbin:/sbin:$PATH"
 
+# Zainicjalizowana od razu (set -u wymaga tego), żeby cleanup_on_exit
+# mogło bezpiecznie sprawdzić tę tablicę nawet gdy skrypt zakończy się
+# zanim dojdzie do instalacji pakietów.
+FAILED_PACKAGES=()
+
 detect_system_lang() {
     local sys_lang="${LANG:-}"
     [[ -z "$sys_lang" ]] && sys_lang="${LC_ALL:-${LC_MESSAGES:-}}"
@@ -33,13 +38,25 @@ cleanup_on_exit() {
     local exit_code=$?
     [ -n "${SUDO_KEEPALIVE_PID:-}" ] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
     printf '\033[?7h' >&3
-    if [ "$exit_code" -ne 0 ]; then
+    # Log zapisujemy nie tylko przy błędzie krytycznym (exit_code != 0),
+    # ale też gdy skrypt "formalnie" się powiódł, a niektóre pakiety się
+    # nie zainstalowały (FAILED_PACKAGES) - inaczej odwołanie do LOG_FILE
+    # w ostrzeżeniu o nieudanych pakietach wskazywałoby na nieistniejący plik.
+    if [ "$exit_code" -ne 0 ] || [ "${#FAILED_PACKAGES[@]}" -gt 0 ]; then
         echo -e "\n" >&3
         cp -f "$TMP_LOG" "$LOG_FILE" 2>/dev/null || true
-        if [[ "$SCRIPT_LANG" == "pl" ]]; then
-            echo -e "${ERR}✘ Wystąpił błąd (kod: $exit_code). Szczegółowy log zapisano w: $LOG_FILE${NC}" >&3
+        if [ "$exit_code" -ne 0 ]; then
+            if [[ "$SCRIPT_LANG" == "pl" ]]; then
+                echo -e "${ERR}✘ Wystąpił błąd (kod: $exit_code). Szczegółowy log zapisano w: $LOG_FILE${NC}" >&3
+            else
+                echo -e "${ERR}✘ An error occurred (code: $exit_code). Detailed log saved to: $LOG_FILE${NC}" >&3
+            fi
         else
-            echo -e "${ERR}✘ An error occurred (code: $exit_code). Detailed log saved to: $LOG_FILE${NC}" >&3
+            if [[ "$SCRIPT_LANG" == "pl" ]]; then
+                echo -e "${WARN}⚠ Niektóre pakiety nie zostały zainstalowane. Log zapisano w: $LOG_FILE${NC}" >&3
+            else
+                echo -e "${WARN}⚠ Some packages failed to install. Log saved to: $LOG_FILE${NC}" >&3
+            fi
         fi
     fi
     rm -f "$TMP_LOG"
@@ -47,10 +64,18 @@ cleanup_on_exit() {
 trap cleanup_on_exit EXIT
 
 _pick_msg() { [[ "$SCRIPT_LANG" == "pl" ]] && echo "$1" || echo "$2"; }
-log_info()  { local m; m="$(_pick_msg "$1" "$2")"; echo -e "${INFO}==> $m${NC}"; }
-log_ok()    { local m; m="$(_pick_msg "$1" "$2")"; echo -e "${SUCCESS}✔ $m${NC}"; }
-log_err()   { local m; m="$(_pick_msg "$1" "$2")"; echo -e "${ERR}✘ ERROR: $m${NC}"; }
-log_warn()  { local m; m="$(_pick_msg "$1" "$2")"; echo -e "${WARN}⚠ WARN: $m${NC}"; }
+# Pisze komunikat ZARÓWNO do logu (stdout jest przekierowane do $TMP_LOG),
+# JAK I na realny terminal użytkownika (fd 3) - dotychczas komunikaty
+# log_info/log_ok/log_warn/log_err trafiały tylko do pliku logu i były
+# niewidoczne na ekranie w czasie działania skryptu.
+_log_write() {
+    echo -e "$1"
+    echo -e "$1" >&3
+}
+log_info()  { local m; m="$(_pick_msg "$1" "$2")"; _log_write "${INFO}==> $m${NC}"; }
+log_ok()    { local m; m="$(_pick_msg "$1" "$2")"; _log_write "${SUCCESS}✔ $m${NC}"; }
+log_err()   { local m; m="$(_pick_msg "$1" "$2")"; _log_write "${ERR}✘ ERROR: $m${NC}"; }
+log_warn()  { local m; m="$(_pick_msg "$1" "$2")"; _log_write "${WARN}⚠ WARN: $m${NC}"; }
 
 trap 'log_err "Błąd w linii $LINENO. Polecenie: $BASH_COMMAND" "Error at line $LINENO. Command: $BASH_COMMAND"' ERR
 
@@ -110,11 +135,31 @@ if [[ "$EUID" -eq 0 ]]; then
     exit 1
 fi
 
+# Reszta stdout/stderr skryptu ląduje w $TMP_LOG, więc bez tego komunikatu
+# monit o hasło od "sudo -v" pojawiłby się na ekranie znienacka, bez
+# żadnego kontekstu (niespójne logowanie do terminala).
+if [[ "$SCRIPT_LANG" == "pl" ]]; then
+    echo -e "${INFO}==> Może zostać wyświetlona prośba o podanie hasła sudo.${NC}" >&3
+else
+    echo -e "${INFO}==> You may be asked for your sudo password below.${NC}" >&3
+fi
 sudo -v
 
 RUN0_NOPASSWD_FILE="/etc/polkit-1/rules.d/51-run0-nopasswd.rules"
 USE_RUN0=0
-if ! command -v visudo >/dev/null 2>&1 || sudo --version 2>/dev/null | grep -qi "run0"; then
+# Prawdziwy pakiet sudo instaluje razem z "sudo" także "visudo" (do
+# bezpiecznej edycji /etc/sudoers). Jego brak to sygnał, że "sudo" na
+# tym systemie może być w rzeczywistości aliasem/wrapperem na
+# systemd-owe "run0" (spotykane na najnowszych dystrybucjach opartych
+# o systemd 256+) - wtedy plik sudoers.d nic by nie dał.
+# Wcześniejsza heurystyka opierała się WYŁĄCZNIE o dopasowanie tekstu
+# "run0" w "sudo --version", co mogło dawać fałszywe trafienia (np.
+# gdyby słowo "run0" pojawiło się przypadkiem gdzie indziej w tym
+# wyjściu) - teraz dodatkowo wymagamy, żeby polecenie "run0" faktycznie
+# istniało w systemie.
+if ! command -v visudo >/dev/null 2>&1; then
+    USE_RUN0=1
+elif command -v run0 >/dev/null 2>&1 && sudo --version 2>/dev/null | grep -qi "run0"; then
     USE_RUN0=1
 fi
 
@@ -128,7 +173,18 @@ show_progress 0 $TOTAL_STEPS "$MSG_PHASE_1"
 
 printf '\033[?7h' >&3
 if [[ "$USE_RUN0" -eq 1 ]]; then
-    printf 'polkit._run0_nopasswd.push("%s");\n' "$CURRENT_USER" | sudo tee "$RUN0_NOPASSWD_FILE" > /dev/null
+    # Poprzednia reguła "polkit._run0_nopasswd.push(...)" nie jest poprawnym
+    # API polkit-JS i w praktyce nic nie robiła (run0 dalej pytał o hasło).
+    # Prawidłowa reguła musi używać polkit.addRule() i akcji run0
+    # ("org.freedesktop.systemd1.manage-units").
+    sudo tee "$RUN0_NOPASSWD_FILE" > /dev/null <<POLKIT_RULE_EOF
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.systemd1.manage-units" &&
+        subject.user == "$CURRENT_USER") {
+        return polkit.Result.YES;
+    }
+});
+POLKIT_RULE_EOF
     sudo systemctl try-restart polkit 2>/dev/null || true
 else
     SUDOERS_TMP="$(mktemp)"
@@ -182,6 +238,10 @@ resolve_package_name() {
 
 detect_distro() {
     if [[ ! -f /etc/os-release ]]; then
+        # Poprzednio kończyło się tu cichym "exit 1" bez żadnego komunikatu -
+        # dla spójności z gałęzią "nierozpoznana dystrybucja" niżej.
+        log_err "Nie znaleziono /etc/os-release - nie można wykryć dystrybucji." \
+                "Could not find /etc/os-release - unable to detect the distribution."
         exit 1
     fi
     source /etc/os-release
@@ -212,6 +272,9 @@ install_one_package() {
         fedora)   sudo dnf install -y "$pkg" ;;
         debian)   sudo apt-get install -y "$pkg" ;;
         opensuse) sudo zypper --non-interactive install --no-recommends "$pkg" ;;
+        # Bez gałęzi domyślnej dopasowanie do niczego zwracałoby sukces (0)
+        # mimo braku instalacji, ukrywając błąd zamiast go zgłosić.
+        *) return 1 ;;
     esac
 }
 
@@ -251,7 +314,6 @@ install_packages() {
     show_progress 4 $TOTAL_STEPS "$MSG_PHASE_2"
 
     local installed=()
-    local failed=()
     local canonical real_name
 
     for canonical in "${PACKAGES[@]}"; do
@@ -259,11 +321,20 @@ install_packages() {
         if install_one_package "$real_name" > /tmp/install-"$canonical".log 2>&1; then
             installed+=("$canonical")
         else
-            failed+=("$canonical (pakiet: $real_name)")
+            # Zapisujemy do globalnej FAILED_PACKAGES (nie lokalnej "failed"),
+            # żeby cleanup_on_exit i finalny raport rzeczywiście ją widziały -
+            # poprzednio tablica "failed" była budowana, ale nigdzie nie
+            # raportowana, więc nieudane instalacje przechodziły po cichu.
+            FAILED_PACKAGES+=("$canonical (pakiet: $real_name, log: /tmp/install-$canonical.log)")
         fi
     done
 
     show_progress 5 $TOTAL_STEPS "$MSG_PHASE_2"
+
+    if [[ ${#FAILED_PACKAGES[@]} -gt 0 ]]; then
+        log_warn "Nie udało się zainstalować: ${FAILED_PACKAGES[*]}" \
+                 "Failed to install: ${FAILED_PACKAGES[*]}"
+    fi
 }
 
 install_packages
@@ -423,4 +494,25 @@ else
     echo -e "${SUCCESS}✔ CONFIGURATION COMPLETED SUCCESSFULLY!${NC}" >&3
 fi
 
-systemctl reboot
+# Restart wcześniej wykonywał się automatycznie i bez pytania - jeśli coś
+# poszło nie tak (np. część pakietów się nie zainstalowała, patrz sekcja
+# "failed" wyżej), użytkownik i tak był resetartowany bez ostrzeżenia.
+if [[ "$SCRIPT_LANG" == "pl" ]]; then
+    printf '%s' "${WARN}Czy zrestartować system teraz, aby zastosować zmiany? [t/N]: ${NC}" >&3
+else
+    printf '%s' "${WARN}Reboot the system now to apply the changes? [y/N]: ${NC}" >&3
+fi
+REBOOT_ANSWER=""
+read -r REBOOT_ANSWER < /dev/tty || true
+case "$REBOOT_ANSWER" in
+    [tTyY]*)
+        systemctl reboot
+        ;;
+    *)
+        if [[ "$SCRIPT_LANG" == "pl" ]]; then
+            echo -e "${INFO}==> Pominięto restart. Uruchom 'sudo systemctl reboot' ręcznie, gdy będziesz gotów.${NC}" >&3
+        else
+            echo -e "${INFO}==> Reboot skipped. Run 'sudo systemctl reboot' manually when ready.${NC}" >&3
+        fi
+        ;;
+esac
