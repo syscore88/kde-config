@@ -205,7 +205,7 @@ resolve_package_name() {
 
 detect_distro() {
     if [[ ! -f /etc/os-release ]]; then
-        log_err "Nie znaleziono /etc/os-release - nie można wykryć dystrybucji." \
+        log_warn "Nie znaleziono /etc/os-release - nie można wykryć dystrybucji." \
                 "Could not find /etc/os-release - unable to detect the distribution."
         exit 1
     fi
