@@ -33,6 +33,7 @@ exec >>"$TMP_LOG" 2>&1
 
 cleanup_on_exit() {
     local exit_code=$?
+    declare -F restore_packagekit >/dev/null && restore_packagekit || true
     [ -n "${SUDO_KEEPALIVE_PID:-}" ] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
     printf '\033[?7h' >&3
     if [ "$exit_code" -ne 0 ] || [ "${#FAILED_PACKAGES[@]}" -gt 0 ]; then
@@ -67,6 +68,59 @@ log_err()   { local m; m="$(_pick_msg "$1" "$2")"; _log_write "${ERR}✘ ERROR: 
 log_warn()  { local m; m="$(_pick_msg "$1" "$2")"; _log_write "${WARN}⚠ WARN: $m${NC}"; }
 
 trap 'log_err "Błąd w linii $LINENO. Polecenie: $BASH_COMMAND" "Error at line $LINENO. Command: $BASH_COMMAND"' ERR
+
+# ==========================================================
+# PACKAGEKIT + BLOKADA MENEDŻERA PAKIETÓW
+# ==========================================================
+PACKAGEKIT_MASKED=0
+PACKAGEKIT_UNITS=(packagekit.service packagekit-offline-update.service)
+
+disable_packagekit() {
+    [[ "${PACKAGEKIT_MASKED:-0}" -eq 1 ]] && return 0
+    sudo systemctl stop "${PACKAGEKIT_UNITS[@]}" 2>/dev/null || true
+    if command -v killall >/dev/null 2>&1; then
+        sudo killall -q packagekitd 2>/dev/null || true
+    else
+        sudo pkill -x packagekitd 2>/dev/null || true
+    fi
+    sudo systemctl mask "${PACKAGEKIT_UNITS[@]}" 2>/dev/null || true
+    PACKAGEKIT_MASKED=1
+    log_info "PackageKit zatrzymany i zamaskowany na czas instalacji." \
+             "PackageKit stopped and masked for the duration of the installation."
+}
+
+restore_packagekit() {
+    [[ "${PACKAGEKIT_MASKED:-0}" -eq 1 ]] || return 0
+    sudo systemctl unmask "${PACKAGEKIT_UNITS[@]}" 2>/dev/null || true
+    PACKAGEKIT_MASKED=0
+    log_info "PackageKit odmaskowany." "PackageKit unmasked."
+}
+
+_pkg_lock_busy() {
+    local f
+    for f in /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/lib/apt/lists/lock \
+             /run/zypp.pid /var/run/zypp.pid /var/lib/pacman/db.lck \
+             /var/cache/dnf/metadata_lock.pid /var/lib/rpm/.rpm.lock; do
+        [[ -e "$f" ]] || continue
+        sudo fuser "$f" >/dev/null 2>&1 && return 0
+    done
+    pgrep -x 'apt|apt-get|dpkg|zypper|pacman|dnf|dnf5|packagekitd' >/dev/null 2>&1 && return 0
+    return 1
+}
+
+wait_for_pkg_lock() {
+    local timeout="${1:-300}" waited=0
+    disable_packagekit
+    while _pkg_lock_busy; do
+        if (( waited >= timeout )); then
+            log_warn "Blokada menedżera pakietów trwa ponad ${timeout}s - kontynuuję mimo to." \
+                     "Package manager lock held for over ${timeout}s - continuing anyway."
+            break
+        fi
+        sleep 3
+        waited=$(( waited + 3 ))
+    done
+}
 
 show_progress() {
     local step=$1
@@ -173,6 +227,8 @@ fi
 
 printf '\033[?7l' >&3
 
+disable_packagekit
+
 show_progress 1 $TOTAL_STEPS "$MSG_PREP"
 
 # ==========================================================
@@ -270,8 +326,10 @@ show_progress 3 $TOTAL_STEPS "$MSG_INSTALL"
 
 install_packages() {
     if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+        wait_for_pkg_lock
         sudo apt-get update || true
     elif [[ "$DISTRO_FAMILY" == "opensuse" ]]; then
+        wait_for_pkg_lock
         add_opensuse_kde_frameworks_repo
     fi
 
@@ -279,6 +337,8 @@ install_packages() {
 
     local installed=()
     local canonical real_name
+
+    wait_for_pkg_lock
 
     for canonical in "${PACKAGES[@]}"; do
         real_name="$(resolve_package_name "$canonical")"
@@ -304,6 +364,8 @@ show_progress 6 $TOTAL_STEPS "$MSG_INSTALL"
 # 3. KONFIGURACJA SYSTEMOWA (SUDO)
 # ==========================================================
 show_progress 7 $TOTAL_STEPS "$MSG_OPTIMIZE"
+
+restore_packagekit
 
 if [[ -f "$SCRIPT_DIR/piwo.png" ]]; then
     sudo mkdir -p /usr/share/plasma/avatars/ || true
