@@ -399,15 +399,6 @@ if [[ -f "$LOCKSCREEN_WALLPAPER_PATH" ]]; then
     chmod 644 "$LOCKSCREEN_CONF" || true
 fi
 
-if [[ "$OLD_USER_PLACEHOLDER" != "$CURRENT_USER" ]]; then
-    for dir in ~/.config ~/.local ~/.icons; do
-        [[ -d "$dir" ]] || continue
-        grep -rl --include="*.conf" --include="*.json" --include="*.ini" \
-            "/home/$OLD_USER_PLACEHOLDER" "$dir" 2>/dev/null \
-            | xargs -r sed -i "s|/home/$OLD_USER_PLACEHOLDER|/home/$CURRENT_USER|g" || true
-    done
-fi
-
 show_progress 10 $TOTAL_STEPS "$MSG_PHASE_3"
 
 rm -rf ~/.cache/icon-cache.kcache ~/.cache/plasma* ~/.cache/ico*
