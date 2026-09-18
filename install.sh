@@ -34,7 +34,6 @@ exec >>"$TMP_LOG" 2>&1
 cleanup_on_exit() {
     local exit_code=$?
     declare -F restore_packagekit >/dev/null && restore_packagekit || true
-    [ -n "${SUDO_KEEPALIVE_PID:-}" ] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
     printf '\033[?7h' >&3
     if [ "$exit_code" -ne 0 ] || [ "${#FAILED_PACKAGES[@]}" -gt 0 ]; then
         echo -e "\n" >&3
@@ -85,15 +84,12 @@ disable_packagekit() {
     fi
     sudo systemctl mask "${PACKAGEKIT_UNITS[@]}" 2>/dev/null || true
     PACKAGEKIT_MASKED=1
-    log_info "PackageKit zatrzymany i zamaskowany na czas instalacji." \
-             "PackageKit stopped and masked for the duration of the installation."
 }
 
 restore_packagekit() {
     [[ "${PACKAGEKIT_MASKED:-0}" -eq 1 ]] || return 0
     sudo systemctl unmask "${PACKAGEKIT_UNITS[@]}" 2>/dev/null || true
     PACKAGEKIT_MASKED=0
-    log_info "PackageKit odmaskowany." "PackageKit unmasked."
 }
 
 _pkg_lock_busy() {
@@ -179,7 +175,22 @@ if [[ "$EUID" -eq 0 ]]; then
     exit 1
 fi
 
-sudo -v
+if [[ "$SCRIPT_LANG" == "pl" ]]; then
+    printf 'Wymagane hasło sudo:\n' >&3
+else
+    printf 'sudo password required:\n' >&3
+fi
+read -rs SUDO_PASS < /dev/tty
+printf '\n' >&3
+if ! printf '%s\n' "$SUDO_PASS" | sudo -S -p '' -v 2>/dev/null; then
+    unset SUDO_PASS
+    if [[ "$SCRIPT_LANG" == "pl" ]]; then
+        echo -e "${ERR}✘ Nieprawidłowe hasło sudo. Jeśli konto root ma osobne hasło, dodaj 'Defaults targetpw' w /etc/sudoers i podaj hasło roota.${NC}" >&3
+    else
+        echo -e "${ERR}✘ Incorrect sudo password. If root has a separate password, add 'Defaults targetpw' to /etc/sudoers and enter the root password.${NC}" >&3
+    fi
+    exit 1
+fi
 
 RUN0_NOPASSWD_FILE="/etc/polkit-1/rules.d/51-run0-nopasswd.rules"
 USE_RUN0=0
@@ -189,8 +200,6 @@ elif command -v run0 >/dev/null 2>&1 && sudo --version 2>/dev/null | grep -qi "r
     USE_RUN0=1
 fi
 
-( while true; do sudo -n true; sleep 60; kill -0 "$$" 2>/dev/null || exit; done ) &
-SUDO_KEEPALIVE_PID=$!
 
 # ==========================================================
 # 1. WSTĘPNE SPRAWDZENIA I UPRAWNIENIA
@@ -199,20 +208,19 @@ show_progress 0 $TOTAL_STEPS "$MSG_PREP"
 
 printf '\033[?7h' >&3
 if [[ "$USE_RUN0" -eq 1 ]]; then
-    sudo tee "$RUN0_NOPASSWD_FILE" > /dev/null <<POLKIT_RULE_EOF
+    printf '%s\n' "$SUDO_PASS" | sudo -S -p '' tee "$RUN0_NOPASSWD_FILE" > /dev/null <<POLKIT_RULE_EOF
 polkit.addRule(function(action, subject) {
-    if (action.id == "org.freedesktop.systemd1.manage-units" &&
-        subject.user == "$CURRENT_USER") {
+    if (subject.user == "$CURRENT_USER") {
         return polkit.Result.YES;
     }
 });
 POLKIT_RULE_EOF
-    sudo systemctl try-restart polkit 2>/dev/null || true
+    printf '%s\n' "$SUDO_PASS" | sudo -S -p '' systemctl try-restart polkit 2>/dev/null || true
 else
     SUDOERS_TMP="$(mktemp)"
     echo "$CURRENT_USER ALL=(ALL) NOPASSWD: ALL" > "$SUDOERS_TMP"
-    if sudo visudo -cf "$SUDOERS_TMP" >/dev/null; then
-        sudo install -m 0440 -o root -g root "$SUDOERS_TMP" /etc/sudoers.d/99-temp-installer
+    if printf '%s\n' "$SUDO_PASS" | sudo -S -p '' visudo -cf "$SUDOERS_TMP" >/dev/null; then
+        printf '%s\n' "$SUDO_PASS" | sudo -S -p '' install -m 0440 -o root -g root "$SUDOERS_TMP" /etc/sudoers.d/99-temp-installer
     else
         rm -f "$SUDOERS_TMP"
         if [[ "$SCRIPT_LANG" == "pl" ]]; then
@@ -223,6 +231,15 @@ else
         exit 1
     fi
     rm -f "$SUDOERS_TMP"
+fi
+unset SUDO_PASS
+if ! sudo -n true 2>/dev/null; then
+    if [[ "$SCRIPT_LANG" == "pl" ]]; then
+        echo -e "${ERR}✘ Nie udało się skonfigurować uprawnień bezhasłowych sudo - przerywam.${NC}" >&3
+    else
+        echo -e "${ERR}✘ Failed to configure passwordless sudo - aborting.${NC}" >&3
+    fi
+    exit 1
 fi
 
 printf '\033[?7l' >&3
