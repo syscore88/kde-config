@@ -33,8 +33,6 @@ exec >>"$TMP_LOG" 2>&1
 
 cleanup_on_exit() {
     local exit_code=$?
-    [[ -n "${RUN0_NOPASSWD_FILE:-}" && -f "$RUN0_NOPASSWD_FILE" ]] && { sudo rm -f "$RUN0_NOPASSWD_FILE"; sudo systemctl try-restart polkit 2>/dev/null || true; }
-    [[ -f /etc/sudoers.d/99-temp-installer ]] && sudo rm -f /etc/sudoers.d/99-temp-installer
     declare -F restore_packagekit >/dev/null && restore_packagekit || true
     [ -n "${SUDO_KEEPALIVE_PID:-}" ] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
     printf '\033[?7h' >&3
@@ -56,6 +54,14 @@ cleanup_on_exit() {
         fi
     fi
     rm -f "$TMP_LOG"
+    local do_reboot=0
+    [ "$exit_code" -eq 0 ] && [ "${DO_REBOOT:-0}" = "1" ] && do_reboot=1
+    if [ "${SUDO_READY:-0}" = "1" ]; then
+        sudo sh -c 'rm -f "$1" "$2"; systemctl try-restart polkit 2>/dev/null; [ "$3" = 1 ] && systemctl reboot' _ \
+            "${RUN0_NOPASSWD_FILE:-/etc/polkit-1/rules.d/51-run0-nopasswd.rules}" \
+            "/etc/sudoers.d/99-temp-installer" \
+            "$do_reboot"
+    fi
 }
 trap cleanup_on_exit EXIT
 
@@ -186,15 +192,13 @@ elif command -v run0 >/dev/null 2>&1 && sudo --version 2>/dev/null | grep -qi "r
     USE_RUN0=1
 fi
 
-( while true; do sudo -n true; sleep 60; kill -0 "$$" 2>/dev/null || exit; done ) &
-SUDO_KEEPALIVE_PID=$!
-
 # ==========================================================
 # 1. WSTĘPNE SPRAWDZENIA I UPRAWNIENIA
 # ==========================================================
 show_progress 0 $TOTAL_STEPS "$MSG_PREP"
 
 printf '\033[?7h' >&3
+SUDO_READY=0
 if [[ "$USE_RUN0" -eq 1 ]]; then
     sudo tee "$RUN0_NOPASSWD_FILE" > /dev/null <<POLKIT_RULE_EOF
 polkit.addRule(function(action, subject) {
@@ -204,19 +208,25 @@ polkit.addRule(function(action, subject) {
 });
 POLKIT_RULE_EOF
     sudo systemctl try-restart polkit 2>/dev/null || true
-    sudo -n true 2>/dev/null || sudo systemctl try-restart polkit 2>/dev/null || true
+    SUDO_READY=1
 else
+    sudo -v
+
+    (
+        set +e
+        trap - ERR
+        while true; do
+            sudo -n true
+            sleep 60
+            kill -0 "$$" 2>/dev/null || exit
+        done
+    ) &
+    SUDO_KEEPALIVE_PID=$!
+
     SUDOERS_TMP="$(mktemp)"
     echo "$CURRENT_USER ALL=(ALL) NOPASSWD: ALL" > "$SUDOERS_TMP"
     if sudo visudo -cf "$SUDOERS_TMP" >/dev/null; then
         sudo install -m 0440 -o root -g root "$SUDOERS_TMP" /etc/sudoers.d/99-temp-installer
-        if ! sudo -n true 2>/dev/null; then
-            if [[ "$SCRIPT_LANG" == "pl" ]]; then
-                echo -e "${WARN}⚠ Reguła NOPASSWD zainstalowana, ale sudo nadal prosi o hasło - sprawdź 'sudo -l' (możliwa inna reguła w /etc/sudoers nadpisująca wpis z sudoers.d).${NC}" >&3
-            else
-                echo -e "${WARN}⚠ NOPASSWD rule installed, but sudo still asks for a password - check 'sudo -l' (a rule in /etc/sudoers may be overriding the sudoers.d entry).${NC}" >&3
-            fi
-        fi
     else
         rm -f "$SUDOERS_TMP"
         if [[ "$SCRIPT_LANG" == "pl" ]]; then
@@ -227,6 +237,7 @@ else
         exit 1
     fi
     rm -f "$SUDOERS_TMP"
+    SUDO_READY=1
 fi
 
 printf '\033[?7l' >&3
@@ -505,4 +516,5 @@ else
     echo -e "${SUCCESS}✔ CONFIGURATION COMPLETED SUCCESSFULLY!${NC}" >&3
 fi
 
-systemctl reboot
+DO_REBOOT=1
+exit 0
