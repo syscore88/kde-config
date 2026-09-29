@@ -249,40 +249,6 @@ show_progress 1 $TOTAL_STEPS "$MSG_PREP"
 # ==========================================================
 # 2. WYKRYWANIE DYSTRYBUCJI I INSTALACJA PAKIETÓW
 # ==========================================================
-PACKAGES=(
-    plasma-firewall plasma-nm plasma-pa kscreen bluedevil
-    kde-gtk-config kinfocenter kio-admin kdeplasma-addons
-    aspell-pl kaccounts-providers dolphin konsole
-    dolphin-plugins spectacle gwenview okular ark kate
-    plymouth-kcm plasma-systemmonitor
-)
-
-declare -A PACKAGE_NAME_OVERRIDES=(
-    [fedora:aspell-pl]="hunspell-pl"
-    [opensuse:aspell-pl]="aspell-pl"
-    [opensuse:kde-gtk-config]="kde-gtk-config6"
-    [opensuse:kio-admin]="kio-admin"
-    [opensuse:plymouth-kcm]="plymouth-kcm6"
-    [opensuse:plasma-firewall]="plasma6-firewall"
-    [opensuse:plasma-nm]="plasma6-nm"
-    [opensuse:plasma-pa]="plasma6-pa"
-    [opensuse:kscreen]="kscreen6"
-    [opensuse:bluedevil]="bluedevil6"
-    [opensuse:kinfocenter]="kinfocenter6"
-    [opensuse:kdeplasma-addons]="kdeplasma6-addons"
-    [opensuse:plasma-systemmonitor]="plasma6-systemmonitor"
-)
-
-resolve_package_name() {
-    local canonical="$1"
-    local key="${DISTRO_FAMILY}:${canonical}"
-    if [[ -n "${PACKAGE_NAME_OVERRIDES[$key]:-}" ]]; then
-        echo "${PACKAGE_NAME_OVERRIDES[$key]}"
-    else
-        echo "$canonical"
-    fi
-}
-
 detect_distro() {
     if [[ ! -f /etc/os-release ]]; then
         log_warn "Nie znaleziono /etc/os-release - nie można wykryć dystrybucji." \
@@ -292,7 +258,7 @@ detect_distro() {
     source /etc/os-release
     local id_like="${ID_LIKE:-${ID:-}}"
 
-    case "$id_like" in
+    case "${id_like,,}" in
         *arch*) DISTRO_FAMILY="arch" ;;
         *fedora*) DISTRO_FAMILY="fedora" ;;
         *suse*) DISTRO_FAMILY="opensuse" ;;
@@ -325,6 +291,18 @@ install_one_package() {
 detect_distro
 show_progress 2 $TOTAL_STEPS "$MSG_PREP"
 
+if [[ "$DISTRO_FAMILY" == "arch" ]]; then
+    PACKAGES=(
+        plasma-firewall plasma-nm plasma-pa kscreen bluedevil
+        kde-gtk-config kinfocenter kio-admin kdeplasma-addons
+        aspell-pl kaccounts-providers dolphin konsole
+        dolphin-plugins spectacle gwenview okular ark kate
+        plymouth-kcm plasma-systemmonitor
+    )
+else
+    PACKAGES=(kio-admin)
+fi
+
 show_progress 3 $TOTAL_STEPS "$MSG_INSTALL"
 
 install_packages() {
@@ -338,16 +316,14 @@ install_packages() {
     show_progress 4 $TOTAL_STEPS "$MSG_INSTALL"
 
     local installed=()
-    local canonical real_name
 
     wait_for_pkg_lock
 
-    for canonical in "${PACKAGES[@]}"; do
-        real_name="$(resolve_package_name "$canonical")"
-        if install_one_package "$real_name" > /tmp/install-"$canonical".log 2>&1; then
-            installed+=("$canonical")
+    for pkg in "${PACKAGES[@]}"; do
+        if install_one_package "$pkg" > /tmp/install-"$pkg".log 2>&1; then
+            installed+=("$pkg")
         else
-            FAILED_PACKAGES+=("$canonical (pakiet: $real_name, log: /tmp/install-$canonical.log)")
+            FAILED_PACKAGES+=("$pkg (log: /tmp/install-$pkg.log)")
         fi
     done
 
