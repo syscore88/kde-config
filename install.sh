@@ -195,8 +195,6 @@ fi
 # ==========================================================
 # 1. WSTĘPNE SPRAWDZENIA I UPRAWNIENIA
 # ==========================================================
-show_progress 0 $TOTAL_STEPS "$MSG_PREP"
-
 printf '\033[?7h' >&3
 SUDO_READY=0
 if [[ "$USE_RUN0" -eq 1 ]]; then
@@ -241,6 +239,8 @@ else
 fi
 
 printf '\033[?7l' >&3
+
+show_progress 0 $TOTAL_STEPS "$MSG_PREP"
 
 disable_packagekit
 
@@ -289,23 +289,14 @@ detect_distro() {
         exit 1
     fi
     source /etc/os-release
-    local id="${ID:-}"
-    local id_like="${ID_LIKE:-}"
+    local id_like="${ID_LIKE:-${ID:-}}"
 
-    case "$id" in
-        arch|archlinux|endeavouros|manjaro) DISTRO_FAMILY="arch" ;;
-        fedora) DISTRO_FAMILY="fedora" ;;
-        opensuse*|sles) DISTRO_FAMILY="opensuse" ;;
-        debian|ubuntu|kubuntu|linuxmint|pop|neon|zorin) DISTRO_FAMILY="debian" ;;
-        *)
-            case "$id_like" in
-                *arch*) DISTRO_FAMILY="arch" ;;
-                *fedora*) DISTRO_FAMILY="fedora" ;;
-                *suse*) DISTRO_FAMILY="opensuse" ;;
-                *debian*|*ubuntu*) DISTRO_FAMILY="debian" ;;
-                *) log_err "Nierozpoznana dystrybucja." "Unrecognized distribution."; exit 1 ;;
-            esac
-            ;;
+    case "$id_like" in
+        *arch*) DISTRO_FAMILY="arch" ;;
+        *fedora*) DISTRO_FAMILY="fedora" ;;
+        *suse*) DISTRO_FAMILY="opensuse" ;;
+        *debian*|*ubuntu*) DISTRO_FAMILY="debian" ;;
+        *) log_err "Nierozpoznana dystrybucja." "Unrecognized distribution."; exit 1 ;;
     esac
 }
 
