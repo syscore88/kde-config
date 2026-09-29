@@ -259,10 +259,17 @@ PACKAGES=(
 
 declare -A PACKAGE_NAME_OVERRIDES=(
     [fedora:aspell-pl]="hunspell-pl"
-    [opensuse:aspell-pl]="hunspell-pl"
+    [opensuse:aspell-pl]="aspell-pl"
     [opensuse:kio-admin]="kio_admin"
-    [debian:plymouth-kcm]="kde-config-plymouth"
     [opensuse:plymouth-kcm]="plymouth-kcm6"
+    [opensuse:plasma-firewall]="plasma6-firewall"
+    [opensuse:plasma-nm]="plasma6-nm"
+    [opensuse:plasma-pa]="plasma6-pa"
+    [opensuse:kscreen]="kscreen6"
+    [opensuse:bluedevil]="bluedevil6"
+    [opensuse:kinfocenter]="kinfocenter6"
+    [opensuse:kdeplasma-addons]="kdeplasma6-addons"
+    [opensuse:plasma-systemmonitor]="plasma6-systemmonitor"
 )
 
 resolve_package_name() {
@@ -321,27 +328,6 @@ install_one_package() {
         opensuse) sudo zypper --non-interactive install --no-recommends "$pkg" ;;
         *) return 1 ;;
     esac
-}
-
-add_opensuse_kde_frameworks_repo() {
-    local repo_alias="KDE_Frameworks_plymouth"
-    local suse_target
-
-    if [[ "${NAME:-}" == *Tumbleweed* || "${PRETTY_NAME:-}" == *Tumbleweed* ]]; then
-        suse_target="openSUSE_Tumbleweed"
-    else
-        suse_target="openSUSE_Leap_${VERSION_ID:-16.0}"
-    fi
-
-    local repo_url="https://download.opensuse.org/repositories/KDE:/Frameworks/${suse_target}/"
-
-    if sudo zypper lr -u 2>/dev/null | grep -qF "$repo_url"; then
-        return 0
-    fi
-
-    if sudo zypper --non-interactive addrepo --refresh --priority 90 "$repo_url" "$repo_alias"; then
-        sudo zypper --non-interactive --gpg-auto-import-keys refresh "$repo_alias" || true
-    fi
 }
 
 detect_distro
