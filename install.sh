@@ -302,8 +302,18 @@ detect_distro() {
     esac
 }
 
+pkg_installed() {
+    case "$DISTRO_FAMILY" in
+        arch)            pacman -Qq "$1" &>/dev/null ;;
+        fedora|opensuse) rpm -q --quiet "$1" &>/dev/null ;;
+        debian)          [[ "$(dpkg-query -W -f='${db:Status-Abbrev}' "$1" 2>/dev/null)" == ii* ]] ;;
+        *)               return 1 ;;
+    esac
+}
+
 install_one_package() {
     local pkg="$1"
+    pkg_installed "$pkg" && return 0
     case "$DISTRO_FAMILY" in
         arch)     sudo pacman -S --noconfirm --needed "$pkg" ;;
         fedora)   sudo dnf install -y "$pkg" ;;
