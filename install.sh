@@ -341,7 +341,6 @@ install_packages() {
         sudo apt-get update || true
     elif [[ "$DISTRO_FAMILY" == "opensuse" ]]; then
         wait_for_pkg_lock
-        add_opensuse_kde_frameworks_repo
     fi
 
     show_progress 4 $TOTAL_STEPS "$MSG_INSTALL"
