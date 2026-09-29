@@ -300,7 +300,7 @@ if [[ "$DISTRO_FAMILY" == "arch" ]]; then
         plymouth-kcm plasma-systemmonitor
     )
 else
-    PACKAGES=(kio-admin)
+    PACKAGES=(kio-admin dolphin-plugins plymouth-kcm)
 fi
 
 show_progress 3 $TOTAL_STEPS "$MSG_INSTALL"
