@@ -319,7 +319,6 @@ cat > "$BLOCK_TMP" <<'NIXMODULE_EOF'
 
   environment.systemPackages = with pkgs; [
     # --- Narzędzia i Aplikacje ---
-    flatseal
     dconf-editor
     steam-run
     brave-origin
