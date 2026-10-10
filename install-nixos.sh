@@ -304,12 +304,12 @@ cat > "$BLOCK_TMP" <<'NIXMODULE_EOF'
   ];
 
   # Ukrycie menu systemd-boot (menu pokaże się po przytrzymaniu Spacji/Shift przy starcie)
-  boot.loader.timeout = 0;
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.timeout = pkgs.lib.mkDefault 0;
+  boot.loader.systemd-boot.enable = pkgs.lib.mkDefault true;
+  boot.loader.efi.canTouchEfiVariables = pkgs.lib.mkDefault true;
 
   # Zostaw tylko 2 najnowsze generacje systemu w menu startowym
-  boot.loader.systemd-boot.configurationLimit = 2;
+  boot.loader.systemd-boot.configurationLimit = pkgs.lib.mkDefault 2;
 
   # Automatyczne usuwanie starych generacji (zostają 2 najnowsze)
   nix.gc = {
