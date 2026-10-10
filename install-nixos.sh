@@ -321,7 +321,7 @@ cat > "$BLOCK_TMP" <<'NIXMODULE_EOF'
     # --- Narzędzia i Aplikacje ---
     dconf-editor
     steam-run
-    brave-origin
+    brave
     google-chrome
     firefox
     faugus-launcher
