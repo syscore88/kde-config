@@ -304,9 +304,12 @@ cat > "$BLOCK_TMP" <<'NIXMODULE_EOF'
   ];
 
   # Ukrycie menu systemd-boot (menu pokaże się po przytrzymaniu Spacji/Shift przy starcie)
+  boot.loader.timeout = 0;
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
   # Zostaw tylko 2 najnowsze generacje systemu w menu startowym
-  # (opcje boot.loader dodawane przez skrypt tylko wtedy, gdy nie ma ich już w configuration.nix)
-  __BOOT_LOADER_OPTS__
+  boot.loader.systemd-boot.configurationLimit = 2;
 
   # Automatyczne usuwanie starych generacji (zostają 2 najnowsze)
   nix.gc = {
@@ -422,29 +425,6 @@ sed -i "s/__INSTALL_USER__/$CURRENT_USER/g" "$BLOCK_TMP"
 
 # Usunięcie poprzedniego bloku (jeśli skrypt był już uruchamiany)
 sudo sed -i '/install\.sh: BEGIN/,/install\.sh: END/d' "$CONF"
-
-# Opcje boot.loader dodajemy tylko, jeśli nie są jeszcze zdefiniowane w configuration.nix
-# (podwójna definicja tego samego atrybutu w jednym pliku kończy się błędem w Nix)
-BOOT_TMP="$(mktemp)"
-add_boot_opt() {
-    local pattern="$1" line="$2"
-    if sudo grep -Eq "$pattern" "$CONF"; then
-        log_warn "Opcja już istnieje w configuration.nix - pomijam: $line" \
-                 "Option already set in configuration.nix - skipping: $line"
-    else
-        echo "  $line" >> "$BOOT_TMP"
-    fi
-}
-add_boot_opt 'boot\.loader\.timeout[[:space:]]*=|^[[:space:]]*timeout[[:space:]]*=' \
-             'boot.loader.timeout = 0;'
-add_boot_opt 'systemd-boot\.enable[[:space:]]*=|systemd-boot[[:space:]]*=[[:space:]]*\{' \
-             'boot.loader.systemd-boot.enable = true;'
-add_boot_opt 'canTouchEfiVariables[[:space:]]*=' \
-             'boot.loader.efi.canTouchEfiVariables = true;'
-add_boot_opt 'configurationLimit[[:space:]]*=' \
-             'boot.loader.systemd-boot.configurationLimit = 2;'
-sed -i -e "/__BOOT_LOADER_OPTS__/{r $BOOT_TMP" -e 'd}' "$BLOCK_TMP"
-rm -f "$BOOT_TMP"
 
 # Wstawienie bloku przed ostatnim nawiasem zamykającym }
 LAST_BRACE_LINE="$(grep -n '^}' "$CONF" | tail -n 1 | cut -d: -f1)"
