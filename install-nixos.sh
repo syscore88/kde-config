@@ -390,9 +390,6 @@ cat > "$BLOCK_TMP" <<'NIXMODULE_EOF'
     coreutils
   ];
 
-  # Zezwolenie na pakiety unfree (Chrome, Discord itd.)
-  nixpkgs.config.allowUnfree = true;
-
   # Optymalizacja pod gry
   programs.gamemode.enable = true;
 
