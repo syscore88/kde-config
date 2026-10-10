@@ -304,9 +304,9 @@ cat > "$BLOCK_TMP" <<'NIXMODULE_EOF'
   ];
 
   # Ukrycie menu systemd-boot (menu pokaże się po przytrzymaniu Spacji/Shift przy starcie)
+  # (systemd-boot.enable i efi.canTouchEfiVariables są już zdefiniowane w domyślnym configuration.nix
+  #  - ponowna definicja w tym samym pliku powodowała błąd "attribute already defined")
   boot.loader.timeout = 0;
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
 
   # Zostaw tylko 2 najnowsze generacje systemu w menu startowym
   boot.loader.systemd-boot.configurationLimit = 2;
@@ -404,7 +404,9 @@ cat > "$BLOCK_TMP" <<'NIXMODULE_EOF'
   security.polkit.enable = true;
 
   # Przypisanie użytkownika do grupy libvirtd
-  users.users.__INSTALL_USER__.extraGroups = [ "libvirtd" ];
+  # (przez users.groups, bo users.users.<nazwa>.extraGroups jest już zdefiniowane w configuration.nix
+  #  i ponowna definicja w tym samym pliku wywołałaby ten sam błąd)
+  users.groups.libvirtd.members = [ "__INSTALL_USER__" ];
 
   # Obsługa Flatpak
   services.flatpak.enable = true;
