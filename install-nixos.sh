@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==========================================================
-# SKRYPT KONFIGURACYJNY KDE NIXOS
+# SKRYPT KONFIGURACYJNY KDE PLASMA NIXOS
 # ==========================================================
 
 set -Eeuo pipefail
@@ -118,9 +118,8 @@ CURRENT_USER=$(whoami)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NIXOS_DIR="/etc/nixos"
 CONF="$NIXOS_DIR/configuration.nix"
-MODULE_FILE="$NIXOS_DIR/install-sh.nix"
 GRAPHICS_DIR="$NIXOS_DIR/images"
-GRAPHICS_FILES=(login-wallpaper.png piwo.png wallpaper.jpg lock_screen.jpg)
+GRAPHICS_FILES=(login-wallpaper.png piwo.png)
 
 if [[ "$EUID" -eq 0 ]]; then
     echo -e "${ERR}✘ Nie uruchamiaj skryptu jako root. Uruchom jako zwykły użytkownik z sudo.${NC}" >&3
@@ -183,11 +182,9 @@ show_progress 3 $TOTAL_STEPS "$MSG_CONFIG"
 BACKUP="$CONF.bak-$(date +%Y%m%d_%H%M%S)"
 sudo cp -a "$CONF" "$BACKUP"
 
-sudo tee "$MODULE_FILE" > /dev/null <<'NIXMODULE_EOF'
-# Plik generowany przez install.sh - ustawienia dodane do configuration.nix
-{ config, pkgs, ... }:
-
-{
+BLOCK_TMP="$(mktemp)"
+cat > "$BLOCK_TMP" <<'NIXMODULE_EOF'
+  # --- install.sh: BEGIN (blok jest nadpisywany przy ponownym uruchomieniu skryptu) ---
   # Sterowniki graficzne
   hardware.graphics = {
     enable = true;
@@ -231,7 +228,7 @@ sudo tee "$MODULE_FILE" > /dev/null <<'NIXMODULE_EOF'
     };
   };
 
-  # Automatyczne kopiowanie plików graficznych z /etc/nixos/images (wgrywa je install.sh)
+  # Automatyczne kopiowanie tapety ekranu logowania i awatara z /etc/nixos/images (wgrywa je install.sh)
   # tylko przy przebudowie systemu (nixos-rebuild switch lub test), nie przy każdym starcie systemu.
   # Nazwa użytkownika i katalog domowy są brane z konfiguracji systemu. Brakujące pliki są pomijane.
   system.activationScripts.copyGraphicsFiles = {
@@ -240,7 +237,6 @@ sudo tee "$MODULE_FILE" > /dev/null <<'NIXMODULE_EOF'
       if [ "''${NIXOS_ACTION:-}" = switch ] || [ "''${NIXOS_ACTION:-}" = test ]; then
       SOURCE_DIR="/etc/nixos/images"
       copy_file() { if [ -f "$SOURCE_DIR/$1" ]; then install -Dm644 "$SOURCE_DIR/$1" "$2"; fi; }
-      copy_user_file() { if [ -f "$SOURCE_DIR/$1" ]; then install -m644 -o "$3" -g "$4" "$SOURCE_DIR/$1" "$2"; fi; }
 
       # Tapeta ekranu logowania i awatar (systemowe)
       copy_file login-wallpaper.png /usr/share/wallpapers/login-wallpaper.png
@@ -260,19 +256,13 @@ sudo tee "$MODULE_FILE" > /dev/null <<'NIXMODULE_EOF'
           echo 'Icon=/var/lib/AccountsService/icons/${u.name}' >> "$ACCOUNTS_FILE"
         fi
       fi
-
-      # Tapeta pulpitu i ekranu blokady użytkownika
-      if [ -d ${u.home} ]; then
-        install -d -o ${u.name} -g ${u.group} ${u.home}/.local ${u.home}/.local/share ${u.home}/.local/share/wallpapers
-        copy_user_file wallpaper.jpg ${u.home}/.local/share/wallpapers/wallpaper.jpg ${u.name} ${u.group}
-        copy_user_file lock_screen.jpg ${u.home}/.local/share/wallpapers/lock_screen.jpg ${u.name} ${u.group}
-      fi
     '') (builtins.filter (u: u.isNormalUser) (builtins.attrValues config.users.users))) + ''
       fi
     '';
   };
 
-  # Ustawienie tapety pulpitu i ekranu blokady przy logowaniu (ponownie po zmianie plików)
+  # Ustawienie tapety pulpitu i ekranu blokady przy logowaniu z ~/.local/share/wallpapers
+  # (pliki wallpaper.jpg i lock_screen.jpg kopiuje tam install.sh razem z katalogiem .local; ponowne ustawienie po ich zmianie)
   environment.etc."xdg/autostart/force-wallpaper.desktop".text = ''
     [Desktop Entry]
     Type=Application
@@ -429,26 +419,23 @@ sudo tee "$MODULE_FILE" > /dev/null <<'NIXMODULE_EOF'
     krdp
     krfb
   ];
-}
+  # --- install.sh: END ---
 NIXMODULE_EOF
-sudo sed -i "s/__INSTALL_USER__/$CURRENT_USER/g" "$MODULE_FILE"
+sed -i "s/__INSTALL_USER__/$CURRENT_USER/g" "$BLOCK_TMP"
 
-if ! grep -q 'install-sh\.nix' "$CONF"; then
-    if grep -q 'hardware-configuration\.nix' "$CONF"; then
-        sudo sed -i '0,/\.\/hardware-configuration\.nix/s|\./hardware-configuration\.nix|&\n    ./install-sh.nix|' "$CONF"
-    elif grep -qE 'imports *= *\[' "$CONF"; then
-        sudo sed -i '0,/imports *= *\[/s|imports *= *\[|imports = [ ./install-sh.nix |' "$CONF"
-    else
-        log_err "Nie znaleziono listy imports w $CONF - dodaj ręcznie: ./install-sh.nix" \
-                "No imports list found in $CONF - add ./install-sh.nix manually."
-        exit 1
-    fi
-fi
+# Usunięcie poprzedniego bloku (jeśli skrypt był już uruchamiany)
+sudo sed -i '/install\.sh: BEGIN/,/install\.sh: END/d' "$CONF"
 
-# Konfiguracje flake widzą tylko pliki śledzone przez git
-if [[ -d "$NIXOS_DIR/.git" ]]; then
-    sudo git -C "$NIXOS_DIR" add -N install-sh.nix images 2>/dev/null || true
+# Wstawienie bloku przed ostatnim nawiasem zamykającym }
+LAST_BRACE_LINE="$(grep -n '^}' "$CONF" | tail -n 1 | cut -d: -f1)"
+if [[ -z "$LAST_BRACE_LINE" ]]; then
+    rm -f "$BLOCK_TMP"
+    log_err "Nie znaleziono końca konfiguracji (}) w $CONF." \
+            "Could not find the closing brace (}) in $CONF."
+    exit 1
 fi
+sudo sed -i "$((LAST_BRACE_LINE - 1))r $BLOCK_TMP" "$CONF"
+rm -f "$BLOCK_TMP"
 
 # ==========================================================
 # 4. PRZEBUDOWA SYSTEMU
