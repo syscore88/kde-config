@@ -342,7 +342,6 @@ cat > "$BLOCK_TMP" <<'NIXMODULE_EOF'
     qmmp
     vlc
     opencode
-    ventoy
     wine-staging
     winetricks
     mangohud
@@ -353,6 +352,7 @@ cat > "$BLOCK_TMP" <<'NIXMODULE_EOF'
 
     # --- System, Dyski & Wygoda ---
     kdePackages.partitionmanager
+    gnome-disk-utility
     timeshift
     bleachbit
     fastfetch
