@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# ==========================================================
-# SKRYPT KONFIGURACYJNY WIZUALNYCH ASPEKTÓW KDE PLASMA
-# ==========================================================
+# =============================================================
+# SKRYPT KONFIGURACYJNY WIZUALNYCH ASPEKTÓW KDE PLASMA (NixOS)
+# =============================================================
 
 set -Eeuo pipefail
 
