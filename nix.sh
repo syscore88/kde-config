@@ -160,6 +160,7 @@ else
     SUDOERS_TMP="$(mktemp)"
     echo "$CURRENT_USER ALL=(ALL) NOPASSWD: ALL" > "$SUDOERS_TMP"
     if sudo visudo -cf "$SUDOERS_TMP" >/dev/null; then
+        sudo mkdir -p /etc/sudoers.d
         sudo install -m 0440 -o root -g root "$SUDOERS_TMP" /etc/sudoers.d/99-temp-installer
     else
         rm -f "$SUDOERS_TMP"
@@ -218,16 +219,6 @@ if [[ -f "$SCRIPT_DIR/login-wallpaper.png" ]]; then
     Image=file:///etc/wallpapers/login-wallpaper.png
   '';
   environment.etc."wallpapers/login-wallpaper.png".source = ./login-wallpaper.png;
-  nixpkgs.overlays = [
-    (final: prev: {
-      kdePackages = prev.kdePackages.overrideScope (kfinal: kprev: {
-        kwalletmanager = prev.emptyDirectory;
-      });
-    })
-  ];
-  security.pam.services.login.kwallet.enable = pkgs.lib.mkForce false;
-  security.pam.services.sddm.kwallet.enable = pkgs.lib.mkForce false;
-  security.pam.services.kde.kwallet.enable = pkgs.lib.mkForce false;
   # plasma-login-wallpaper END
 NIX_EOF
 
