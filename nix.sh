@@ -240,7 +240,6 @@ sudo install -m 644 -o root -g root "$KDE_MODULE_TMP" "$KDE_MODULE"
 rm -f "$KDE_MODULE_TMP"
 
 sudo cp -f "$NIXOS_CONF" "$NIXOS_CONF.bak"
-sudo sed -i '/# plasma-login-wallpaper BEGIN/,/# plasma-login-wallpaper END/d' "$NIXOS_CONF"
 if ! sudo grep -q "kde-visual.nix" "$NIXOS_CONF"; then
     if sudo grep -q "\./hardware-configuration\.nix" "$NIXOS_CONF"; then
         sudo sed -i 's|\./hardware-configuration\.nix|& ./kde-visual.nix|' "$NIXOS_CONF"
