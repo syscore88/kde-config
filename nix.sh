@@ -116,7 +116,11 @@ CURRENT_USER=$(whoami)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ "$EUID" -eq 0 ]]; then
-    echo -e "${ERR}✘ Nie uruchamiaj skryptu jako root. Uruchom jako zwykły użytkownik z sudo.${NC}" >&3
+    if [[ "$SCRIPT_LANG" == "pl" ]]; then
+        echo -e "${ERR}✘ Nie uruchamiaj skryptu jako root. Uruchom jako zwykły użytkownik z sudo.${NC}" >&3
+    else
+        echo -e "${ERR}✘ Do not run this script as root. Run as a normal user with sudo.${NC}" >&3
+    fi
     exit 1
 fi
 
@@ -164,11 +168,7 @@ else
         sudo install -m 0440 -o root -g root "$SUDOERS_TMP" /etc/sudoers.d/99-temp-installer
     else
         rm -f "$SUDOERS_TMP"
-        if [[ "$SCRIPT_LANG" == "pl" ]]; then
-            echo -e "${ERR}✘ Nieprawidłowa składnia reguły sudoers - przerywam.${NC}" >&3
-        else
-            echo -e "${ERR}✘ Invalid sudoers rule syntax - aborting.${NC}" >&3
-        fi
+        log_err "Nieprawidłowa składnia reguły sudoers - przerywam." "Invalid sudoers rule syntax - aborting."
         exit 1
     fi
     rm -f "$SUDOERS_TMP"
@@ -186,65 +186,87 @@ show_progress 1 $TOTAL_STEPS "$MSG_PREP"
 # ==========================================================
 show_progress 2 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
-if [[ -f "$SCRIPT_DIR/piwo.png" ]]; then
-    sudo mkdir -p /var/lib/AccountsService/icons/ || true
-    sudo cp -f "$SCRIPT_DIR/piwo.png" /var/lib/AccountsService/icons/"$CURRENT_USER" || true
-    sudo chmod 644 /var/lib/AccountsService/icons/"$CURRENT_USER" || true
+NIXOS_DIR="/etc/nixos"
+NIXOS_CONF="$NIXOS_DIR/configuration.nix"
+KDE_MODULE="$NIXOS_DIR/kde-visual.nix"
 
-    ACCOUNTS_FILE="/var/lib/AccountsService/users/$CURRENT_USER"
-    sudo mkdir -p /var/lib/AccountsService/users/ || true
-
-    if [[ ! -f "$ACCOUNTS_FILE" ]]; then
-        echo -e "[User]\nIcon=/var/lib/AccountsService/icons/$CURRENT_USER" | sudo tee "$ACCOUNTS_FILE" > /dev/null
-    else
-        if sudo grep -q "^Icon=" "$ACCOUNTS_FILE"; then
-            sudo sed -i "s|^Icon=.*|Icon=/var/lib/AccountsService/icons/$CURRENT_USER|" "$ACCOUNTS_FILE" || true
-        else
-            echo "Icon=/var/lib/AccountsService/icons/$CURRENT_USER" | sudo tee -a "$ACCOUNTS_FILE" > /dev/null
-        fi
-    fi
+if [[ ! -f "$NIXOS_CONF" ]]; then
+    log_err "Nie znaleziono $NIXOS_CONF." "$NIXOS_CONF not found."
+    exit 1
 fi
 
-NIXOS_CONF="/etc/nixos/configuration.nix"
+if [[ -f "$SCRIPT_DIR/piwo.png" ]]; then
+    cp -af "$SCRIPT_DIR/piwo.png" "$HOME/.face" 2>/dev/null || true
+    chmod 644 "$HOME/.face" 2>/dev/null || true
+
+    AVATAR_DEST="/var/lib/AccountsService/icons/$CURRENT_USER"
+    ACCOUNTS_FILE="/var/lib/AccountsService/users/$CURRENT_USER"
+
+    sudo mkdir -p /var/lib/AccountsService/icons/ /var/lib/AccountsService/users/ || true
+    sudo cp -f "$SCRIPT_DIR/piwo.png" "$AVATAR_DEST" || true
+    sudo chmod 644 "$AVATAR_DEST" || true
+
+    if [[ ! -f "$ACCOUNTS_FILE" ]]; then
+        echo -e "[User]\nIcon=$AVATAR_DEST" | sudo tee "$ACCOUNTS_FILE" > /dev/null
+    elif sudo grep -q "^Icon=" "$ACCOUNTS_FILE"; then
+        sudo sed -i "s|^Icon=.*|Icon=$AVATAR_DEST|" "$ACCOUNTS_FILE" || true
+    else
+        echo "Icon=$AVATAR_DEST" | sudo tee -a "$ACCOUNTS_FILE" > /dev/null
+    fi
+
+    sudo systemctl restart accounts-daemon 2>/dev/null || true
+fi
+
+KDE_MODULE_TMP="$(mktemp)"
+cat > "$KDE_MODULE_TMP" <<'NIX_EOF'
+{ config, pkgs, lib, ... }:
+
+{
+NIX_EOF
 
 if [[ -f "$SCRIPT_DIR/login-wallpaper.png" ]]; then
-    sudo install -m 644 -o root -g root "$SCRIPT_DIR/login-wallpaper.png" /etc/nixos/login-wallpaper.png
-
-    NIXOS_TMP="$(mktemp)"
-    NIXOS_BLOCK="$(mktemp)"
-    cat > "$NIXOS_BLOCK" <<'NIX_EOF'
-  # plasma-login-wallpaper BEGIN
+    sudo install -m 644 -o root -g root "$SCRIPT_DIR/login-wallpaper.png" "$NIXOS_DIR/login-wallpaper.png"
+    cat >> "$KDE_MODULE_TMP" <<'NIX_EOF'
   environment.etc."plasmalogin.conf".text = ''
     [Greeter][Wallpaper][org.kde.image][General]
     Image=file:///etc/wallpapers/login-wallpaper.png
   '';
   environment.etc."wallpapers/login-wallpaper.png".source = ./login-wallpaper.png;
-  # plasma-login-wallpaper END
 NIX_EOF
+fi
 
-    sudo cp -f "$NIXOS_CONF" "$NIXOS_CONF.bak"
-    sudo sed '/# plasma-login-wallpaper BEGIN/,/# plasma-login-wallpaper END/d' "$NIXOS_CONF" > "$NIXOS_TMP"
-    NIXOS_LAST_LINE="$(grep -n '^}' "$NIXOS_TMP" | tail -n1 | cut -d: -f1)"
-    if [[ -z "$NIXOS_LAST_LINE" ]]; then
-        log_err "Nie znaleziono zamykającego } w $NIXOS_CONF." "Closing } not found in $NIXOS_CONF."
-        exit 1
-    fi
-    {
-        head -n $(( NIXOS_LAST_LINE - 1 )) "$NIXOS_TMP"
-        cat "$NIXOS_BLOCK"
-        tail -n +"$NIXOS_LAST_LINE" "$NIXOS_TMP"
-    } > "$NIXOS_TMP.new"
-    sudo install -m 644 -o root -g root "$NIXOS_TMP.new" "$NIXOS_CONF"
-    rm -f "$NIXOS_TMP" "$NIXOS_TMP.new" "$NIXOS_BLOCK"
+echo "}" >> "$KDE_MODULE_TMP"
+sudo install -m 644 -o root -g root "$KDE_MODULE_TMP" "$KDE_MODULE"
+rm -f "$KDE_MODULE_TMP"
 
-    [[ -e /etc/plasmalogin.conf && ! -L /etc/plasmalogin.conf ]] && sudo rm -f /etc/plasmalogin.conf
-
-    if ! sudo nixos-rebuild switch; then
-        sudo cp -f "$NIXOS_CONF.bak" "$NIXOS_CONF"
-        log_err "nixos-rebuild nie powiódł się - przywrócono configuration.nix." "nixos-rebuild failed - configuration.nix restored."
+sudo cp -f "$NIXOS_CONF" "$NIXOS_CONF.bak"
+sudo sed -i '/# plasma-login-wallpaper BEGIN/,/# plasma-login-wallpaper END/d' "$NIXOS_CONF"
+if ! sudo grep -q "kde-visual.nix" "$NIXOS_CONF"; then
+    if sudo grep -q "\./hardware-configuration\.nix" "$NIXOS_CONF"; then
+        sudo sed -i 's|\./hardware-configuration\.nix|& ./kde-visual.nix|' "$NIXOS_CONF"
+    else
+        log_err "Nie można dodać ./kde-visual.nix do imports w $NIXOS_CONF - dodaj ręcznie." \
+                "Cannot add ./kde-visual.nix to imports in $NIXOS_CONF - add it manually."
         exit 1
     fi
 fi
+
+[[ -e /etc/plasmalogin.conf && ! -L /etc/plasmalogin.conf ]] && sudo rm -f /etc/plasmalogin.conf
+
+if ! sudo nixos-rebuild switch; then
+    sudo cp -f "$NIXOS_CONF.bak" "$NIXOS_CONF"
+    log_err "nixos-rebuild nie powiódł się - przywrócono configuration.nix." "nixos-rebuild failed - configuration.nix restored."
+    exit 1
+fi
+
+safe_copy_dir() {
+    local src="$1" dst="$2"
+    if [[ -d "$src" ]] && [[ "$(realpath "$src" 2>/dev/null)" != "$(realpath "$dst" 2>/dev/null)" ]]; then
+        mkdir -p "$dst" 2>/dev/null || return 0
+        cp -af "$src/." "$dst/" 2>/dev/null || true
+    fi
+    return 0
+}
 
 TARGET_DIR="$HOME/.local/share/wallpapers"
 mkdir -p "$TARGET_DIR"
@@ -260,9 +282,9 @@ sleep 2
 
 show_progress 4 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
-if [[ -d "$SCRIPT_DIR/.config" ]]; then cp -af "$SCRIPT_DIR/.config/." ~/.config/; fi
-if [[ -d "$SCRIPT_DIR/.local" ]]; then cp -af "$SCRIPT_DIR/.local/." ~/.local/; fi
-if [[ -d "$SCRIPT_DIR/.icons" ]]; then cp -af "$SCRIPT_DIR/.icons/." ~/.icons/; fi
+safe_copy_dir "$SCRIPT_DIR/.config" ~/.config
+safe_copy_dir "$SCRIPT_DIR/.local" ~/.local
+safe_copy_dir "$SCRIPT_DIR/.icons" ~/.icons
 
 LOCKSCREEN_CONF="$HOME/.config/kscreenlockerrc"
 LOCKSCREEN_WALLPAPER_PATH="$HOME/.local/share/wallpapers/lock_screen.jpg"
