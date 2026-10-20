@@ -297,10 +297,10 @@ if [[ "$DISTRO_FAMILY" == "arch" ]]; then
         kde-gtk-config kinfocenter kio-admin kdeplasma-addons
         aspell-pl kaccounts-providers dolphin konsole
         dolphin-plugins spectacle gwenview okular ark kate
-        plymouth-kcm plasma-systemmonitor kup bup
+        plymouth-kcm plasma-systemmonitor kup bup krdc krfb
     )
 else
-    PACKAGES=(kio-admin dolphin-plugins plymouth-kcm kup bup)
+    PACKAGES=(kio-admin dolphin-plugins plymouth-kcm kup bup krdc krfb)
 fi
 
 show_progress 3 $TOTAL_STEPS "$MSG_INSTALL"
