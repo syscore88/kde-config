@@ -226,13 +226,13 @@ cat > "$KDE_MODULE_TMP" <<'NIX_EOF'
 NIX_EOF
 
 if [[ -f "$SCRIPT_DIR/login-wallpaper.png" ]]; then
-    sudo install -m 644 -o root -g root "$SCRIPT_DIR/login-wallpaper.png" "$NIXOS_DIR/login-wallpaper.png"
+    sudo mkdir -p "$NIXOS_DIR/wallpapers"
+    sudo install -m 644 -o root -g root "$SCRIPT_DIR/login-wallpaper.png" "$NIXOS_DIR/wallpapers/login-wallpaper.png"
     cat >> "$KDE_MODULE_TMP" <<'NIX_EOF'
   environment.etc."plasmalogin.conf".text = ''
     [Greeter][Wallpaper][org.kde.image][General]
-    Image=file:///etc/wallpapers/login-wallpaper.png
+    Image=file:///etc/nixos/wallpapers/login-wallpaper.png
   '';
-  environment.etc."wallpapers/login-wallpaper.png".source = ./login-wallpaper.png;
 NIX_EOF
 fi
 
