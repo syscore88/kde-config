@@ -307,7 +307,7 @@ if [[ "$DISTRO_FAMILY" == "arch" || "$DISTRO_FAMILY" == "void" ]]; then
         PACKAGES=(dbus elogind NetworkManager sddm kde-plasma "${PACKAGES[@]}")
     fi
 else
-    PACKAGES=(kio-admin dolphin-plugins plymouth-kcm kup bup qrca krdc krfb)
+    PACKAGES=(kio-admin dolphin-plugins plymouth-kcm kup-backup bup qrca krdc krfb)
 fi
 
 show_progress 3 $TOTAL_STEPS "$MSG_INSTALL"
