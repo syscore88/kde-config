@@ -186,6 +186,10 @@
   <Deleted/>
  </Menu>
  <Menu>
+  <Name>Wine</Name>
+  <Deleted/>
+ </Menu>
+ <Menu>
   <Name>.hidden</Name>
   <Include>
    <Filename>org.kde.kwrite.desktop</Filename>
