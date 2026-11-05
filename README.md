@@ -30,15 +30,16 @@ The script auto-detects the system language (Polish/English) from the `LANG`/`LC
 
 The script identifies the OS using `/etc/os-release` (falling back to `ID_LIKE`) and selects the corresponding package manager:
 
-| Distribution | Package Manager | Notes |
-| :--- | :--- | :--- |
-| **Debian / Ubuntu / Pop!_OS / Mint / neon / Zorin** | `apt` | `aspell-pl` → `hunspell-pl`, `kio-admin` → `kio_admin`, `plymouth-kcm` → `plymouth-kcm6` |
-| **Fedora** | `dnf` | `aspell-pl` → `hunspell-pl`, `kio-admin` → `kio_admin`, `plymouth-kcm` → `plymouth-kcm6` |
-| **Arch Linux / Manjaro / EndeavourOS** | `pacman` | `aspell-pl` → `hunspell-pl`, `kio-admin` → `kio_admin`, `plymouth-kcm` → `plymouth-kcm6` |
-| **openSUSE / SLES** | `zypper` | `aspell-pl` → `hunspell-pl`, `kio-admin` → `kio_admin`, `plymouth-kcm` → `plymouth-kcm6` |
+| Distribution | Package Manager |
+| :--- | :--- |
+| **Arch Linux / Manjaro / EndeavourOS** | `pacman` |
+| **Debian / Ubuntu** | `apt` |
+| **openSUSE / SUSE** | `zypper` |
+| **Fedora / RHEL** | `dnf` |
+| **Void** | `xbps` | 
+| **NixOs** | `nix` | 
 
 ---
-
 
 ## 🔍 Module Details
 
