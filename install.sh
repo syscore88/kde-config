@@ -301,13 +301,13 @@ if [[ "$DISTRO_FAMILY" == "arch" || "$DISTRO_FAMILY" == "void" ]]; then
         kde-gtk-config kinfocenter kio-admin kdeplasma-addons
         aspell-pl kaccounts-providers dolphin konsole
         dolphin-plugins spectacle gwenview okular ark kate
-        plymouth-kcm plasma-systemmonitor kup bup qrca krdc krfb
+        plasma-systemmonitor kup bup qrca krdc krfb
     )
     if [[ "$DISTRO_FAMILY" == "void" ]]; then
         PACKAGES=(dbus elogind NetworkManager sddm kde-plasma "${PACKAGES[@]}")
     fi
 else
-    PACKAGES=(kio-admin dolphin-plugins plymouth-kcm kup-backup bup qrca krdc krfb)
+    PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca krdc krfb)
 fi
 
 show_progress 3 $TOTAL_STEPS "$MSG_INSTALL"
