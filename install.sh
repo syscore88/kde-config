@@ -57,7 +57,7 @@ cleanup_on_exit() {
     local do_reboot=0
     [ "$exit_code" -eq 0 ] && [ "${DO_REBOOT:-0}" = "1" ] && do_reboot=1
     if [ "${SUDO_READY:-0}" = "1" ]; then
-        sudo sh -c 'rm -f "$1" "$2"; systemctl try-restart polkit 2>/dev/null; [ "$3" = 1 ] && systemctl reboot' _ \
+        sudo sh -c 'rm -f "$1" "$2"; systemctl try-restart polkit 2>/dev/null; [ "$3" = 1 ] && { systemctl reboot 2>/dev/null || reboot; }' _ \
             "${RUN0_NOPASSWD_FILE:-/etc/polkit-1/rules.d/51-run0-nopasswd.rules}" \
             "/etc/sudoers.d/99-temp-installer" \
             "$do_reboot"
@@ -109,7 +109,7 @@ _pkg_lock_busy() {
         [[ -e "$f" ]] || continue
         sudo fuser "$f" >/dev/null 2>&1 && return 0
     done
-    pgrep -x 'apt|apt-get|dpkg|zypper|pacman|dnf|dnf5|packagekitd' >/dev/null 2>&1 && return 0
+    pgrep -x 'apt|apt-get|dpkg|zypper|pacman|dnf|dnf5|xbps-install|packagekitd' >/dev/null 2>&1 && return 0
     return 1
 }
 
@@ -261,6 +261,7 @@ detect_distro() {
 
     case "${id_like,,}" in
         *arch*) DISTRO_FAMILY="arch" ;;
+        *void*) DISTRO_FAMILY="void" ;;
         *fedora*) DISTRO_FAMILY="fedora" ;;
         *suse*) DISTRO_FAMILY="opensuse" ;;
         *debian*|*ubuntu*) DISTRO_FAMILY="debian" ;;
@@ -271,6 +272,7 @@ detect_distro() {
 pkg_installed() {
     case "$DISTRO_FAMILY" in
         arch)            pacman -Qq "$1" &>/dev/null ;;
+        void)            xbps-query "$1" &>/dev/null ;;
         fedora|opensuse) rpm -q --quiet "$1" &>/dev/null ;;
         debian)          [[ "$(dpkg-query -W -f='${db:Status-Abbrev}' "$1" 2>/dev/null)" == ii* ]] ;;
         *)               return 1 ;;
@@ -282,6 +284,7 @@ install_one_package() {
     pkg_installed "$pkg" && return 0
     case "$DISTRO_FAMILY" in
         arch)     sudo pacman -S --noconfirm --needed "$pkg" ;;
+        void)     sudo xbps-install -y "$pkg" ;;
         fedora)   sudo dnf install -y "$pkg" ;;
         debian)   sudo apt-get install -y "$pkg" ;;
         opensuse) sudo zypper --non-interactive install --no-recommends "$pkg" ;;
@@ -292,7 +295,7 @@ install_one_package() {
 detect_distro
 show_progress 2 $TOTAL_STEPS "$MSG_PREP"
 
-if [[ "$DISTRO_FAMILY" == "arch" ]]; then
+if [[ "$DISTRO_FAMILY" == "arch" || "$DISTRO_FAMILY" == "void" ]]; then
     PACKAGES=(
         plasma-firewall plasma-nm plasma-pa kscreen bluedevil
         kde-gtk-config kinfocenter kio-admin kdeplasma-addons
@@ -300,6 +303,9 @@ if [[ "$DISTRO_FAMILY" == "arch" ]]; then
         dolphin-plugins spectacle gwenview okular ark kate
         plymouth-kcm plasma-systemmonitor kup bup qrca krdc krfb
     )
+    if [[ "$DISTRO_FAMILY" == "void" ]]; then
+        PACKAGES=(dbus elogind NetworkManager sddm kde-plasma "${PACKAGES[@]}")
+    fi
 else
     PACKAGES=(kio-admin dolphin-plugins plymouth-kcm kup bup qrca krdc krfb)
 fi
@@ -312,6 +318,9 @@ install_packages() {
         sudo apt-get update || true
     elif [[ "$DISTRO_FAMILY" == "opensuse" ]]; then
         wait_for_pkg_lock
+    elif [[ "$DISTRO_FAMILY" == "void" ]]; then
+        wait_for_pkg_lock
+        sudo xbps-install -Suy xbps || true
     fi
 
     show_progress 4 $TOTAL_STEPS "$MSG_INSTALL"
@@ -478,6 +487,17 @@ if [[ "$SCRIPT_LANG" == "pl" ]]; then
     echo -e "${SUCCESS}✔ KONFIGURACJA ZAKOŃCZONA SUKCESEM!${NC}" >&3
 else
     echo -e "${SUCCESS}✔ CONFIGURATION COMPLETED SUCCESSFULLY!${NC}" >&3
+fi
+
+if [[ "$DISTRO_FAMILY" == "void" ]]; then
+    for svc in dhcpcd wpa_supplicant; do
+        [[ -L "/var/service/$svc" ]] && sudo rm -f "/var/service/$svc" || true
+    done
+    for svc in dbus elogind NetworkManager bluetoothd sddm; do
+        if [[ -d "/etc/sv/$svc" && ! -e "/var/service/$svc" ]]; then
+            sudo ln -s "/etc/sv/$svc" "/var/service/$svc" || true
+        fi
+    done
 fi
 
 DO_REBOOT=1
