@@ -313,14 +313,14 @@ case "$DISTRO_FAMILY" in
             kde-gtk-config kinfocenter kio-admin kdeplasma-addons
             aspell-pl kaccounts-providers dolphin konsole
             dolphin-plugins spectacle gwenview okular ark kate
-            plasma-systemmonitor kup bup qrca krdc krfb
+            plasma-systemmonitor kup bup krdc krfb
         )
         ;;
     fedora)
-        PACKAGES=(kio-admin dolphin-plugins kup bup qrca krdc krfb)
+        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca krdc krfb)
         ;;
     opensuse)
-        PACKAGES=(kio-admin dolphin-plugins kup bup qrca krdc krfb)
+        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca krdc krfb)
         ;;
     debian)
         PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca krdc krfb)
