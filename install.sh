@@ -279,17 +279,6 @@ pkg_installed() {
     esac
 }
 
-pkg_in_repo() {
-    case "$DISTRO_FAMILY" in
-        arch)     pacman -Si "$1" &>/dev/null ;;
-        void)     xbps-query -R "$1" &>/dev/null ;;
-        fedora)   [[ -n "$(dnf repoquery --quiet --latest-limit 1 "$1" 2>/dev/null)" ]] ;;
-        debian)   apt-cache show "$1" &>/dev/null ;;
-        opensuse) zypper --non-interactive search -x -t package "$1" &>/dev/null ;;
-        *)        return 0 ;;
-    esac
-}
-
 install_one_package() {
     local pkg="$1"
     pkg_installed "$pkg" && return 0
@@ -306,20 +295,37 @@ install_one_package() {
 detect_distro
 show_progress 2 $TOTAL_STEPS "$MSG_PREP"
 
-if [[ "$DISTRO_FAMILY" == "arch" || "$DISTRO_FAMILY" == "void" ]]; then
-    PACKAGES=(
-        plasma-firewall plasma-nm plasma-pa kscreen bluedevil
-        kde-gtk-config kinfocenter kio-admin kdeplasma-addons
-        aspell-pl kaccounts-providers dolphin konsole
-        dolphin-plugins spectacle gwenview okular ark kate
-        plasma-systemmonitor kup bup qrca krdc krfb
-    )
-    if [[ "$DISTRO_FAMILY" == "void" ]]; then
-        PACKAGES=(dbus elogind NetworkManager sddm xorg-minimal mesa-dri plasma-workspace "${PACKAGES[@]}")
-    fi
-else
-    PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca krdc krfb)
-fi
+case "$DISTRO_FAMILY" in
+    arch)
+        PACKAGES=(
+            plasma-firewall plasma-nm plasma-pa kscreen bluedevil
+            kde-gtk-config kinfocenter kio-admin kdeplasma-addons
+            aspell-pl kaccounts-providers dolphin konsole
+            dolphin-plugins spectacle gwenview okular ark kate
+            plasma-systemmonitor kup bup qrca krdc krfb
+        )
+        ;;
+    void)
+        PACKAGES=(
+            dbus elogind NetworkManager sddm xorg-minimal mesa-dri
+            plasma-workspace
+            plasma-firewall plasma-nm plasma-pa kscreen bluedevil
+            kde-gtk-config kinfocenter kio-admin kdeplasma-addons
+            aspell-pl kaccounts-providers dolphin konsole
+            dolphin-plugins spectacle gwenview okular ark kate
+            plasma-systemmonitor kup bup qrca krdc krfb
+        )
+        ;;
+    fedora)
+        PACKAGES=(kio-admin dolphin-plugins kup bup qrca krdc krfb)
+        ;;
+    opensuse)
+        PACKAGES=(kio-admin dolphin-plugins kup bup qrca krdc krfb)
+        ;;
+    debian)
+        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca krdc krfb)
+        ;;
+esac
 
 show_progress 3 $TOTAL_STEPS "$MSG_INSTALL"
 
@@ -342,9 +348,6 @@ install_packages() {
     wait_for_pkg_lock
 
     for pkg in "${PACKAGES[@]}"; do
-        if ! pkg_installed "$pkg" && ! pkg_in_repo "$pkg"; then
-            continue
-        fi
         if install_one_package "$pkg" > /tmp/install-"$pkg".log 2>&1; then
             installed+=("$pkg")
         else
