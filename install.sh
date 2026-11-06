@@ -307,13 +307,13 @@ case "$DISTRO_FAMILY" in
         ;;
     void)
         PACKAGES=(
-            dbus elogind NetworkManager sddm xorg-minimal
-            plasma-workspace plasma-desktop kwin
+            dbus elogind NetworkManager sddm xorg-minimal mesa-dri 
+            plasma-workspace plasma-desktop kwin xorg-server-xwayland
             plasma-firewall plasma-nm plasma-pa kscreen bluedevil
             kde-gtk-config kinfocenter kio-admin kdeplasma-addons
-            aspell-pl kaccounts-providers dolphin konsole
+            aspell-pl kaccounts-providers dolphin konsole kwayland 
             dolphin-plugins spectacle gwenview okular ark kate
-            plasma-systemmonitor kup bup krdc krfb
+            plasma-systemmonitor kup bup krdc krfb qt6-wayland
         )
         ;;
     fedora)
