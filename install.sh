@@ -57,10 +57,10 @@ cleanup_on_exit() {
     local do_reboot=0
     [ "$exit_code" -eq 0 ] && [ "${DO_REBOOT:-0}" = "1" ] && do_reboot=1
     if [ "${SUDO_READY:-0}" = "1" ]; then
-        sudo sh -c 'rm -f "$1" "$2"; systemctl try-restart polkit 2>/dev/null; [ "$3" = 1 ] && { systemctl reboot 2>/dev/null || reboot; }' _ \
+        sudo sh -c 'rm -f "$1" "$2"; systemctl try-restart polkit 2>/dev/null; if [ "$3" = 1 ]; then systemctl reboot 2>/dev/null || reboot; fi; exit 0' _ \
             "${RUN0_NOPASSWD_FILE:-/etc/polkit-1/rules.d/51-run0-nopasswd.rules}" \
             "/etc/sudoers.d/99-temp-installer" \
-            "$do_reboot"
+            "$do_reboot" || true
     fi
 }
 trap cleanup_on_exit EXIT
@@ -321,6 +321,7 @@ install_packages() {
     elif [[ "$DISTRO_FAMILY" == "void" ]]; then
         wait_for_pkg_lock
         sudo xbps-install -Suy xbps || true
+        sudo xbps-install -uy || true
     fi
 
     show_progress 4 $TOTAL_STEPS "$MSG_INSTALL"
@@ -368,12 +369,12 @@ if [[ -f "$SCRIPT_DIR/piwo.png" ]]; then
     sudo mkdir -p /var/lib/AccountsService/users/ || true
 
     if [[ ! -f "$ACCOUNTS_FILE" ]]; then
-        echo -e "[User]\nIcon=/var/lib/AccountsService/icons/$CURRENT_USER" | sudo tee "$ACCOUNTS_FILE" > /dev/null
+        echo -e "[User]\nIcon=/var/lib/AccountsService/icons/$CURRENT_USER" | sudo tee "$ACCOUNTS_FILE" > /dev/null || true
     else
         if sudo grep -q "^Icon=" "$ACCOUNTS_FILE"; then
             sudo sed -i "s|^Icon=.*|Icon=/var/lib/AccountsService/icons/$CURRENT_USER|" "$ACCOUNTS_FILE" || true
         else
-            echo "Icon=/var/lib/AccountsService/icons/$CURRENT_USER" | sudo tee -a "$ACCOUNTS_FILE" > /dev/null
+            echo "Icon=/var/lib/AccountsService/icons/$CURRENT_USER" | sudo tee -a "$ACCOUNTS_FILE" > /dev/null || true
         fi
     fi
 fi
