@@ -307,7 +307,7 @@ case "$DISTRO_FAMILY" in
         ;;
     void)
         PACKAGES=(
-            dbus elogind NetworkManager sddm
+            dbus elogind NetworkManager sddm xorg-minimal
             plasma-workspace plasma-desktop kwin
             plasma-firewall plasma-nm plasma-pa kscreen bluedevil
             kde-gtk-config kinfocenter kio-admin kdeplasma-addons
