@@ -311,9 +311,9 @@ case "$DISTRO_FAMILY" in
             plasma-workspace plasma-desktop kwin xorg-server-xwayland
             plasma-firewall plasma-nm plasma-pa kscreen bluedevil
             kde-gtk-config kinfocenter kio-admin kdeplasma-addons
-            aspell-pl kaccounts-providers dolphin konsole kwayland 
+            aspell-pl kaccounts-providers dolphin konsole 
             dolphin-plugins spectacle gwenview okular ark kate
-            plasma-systemmonitor kup bup krdc krfb qt6-wayland
+            plasma-systemmonitor kup bup krdc krfb 
         )
         ;;
     fedora)
