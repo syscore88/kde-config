@@ -25,10 +25,6 @@
   <Deleted/>
  </Menu>
  <Menu>
-  <Name>wine</Name>
-  <Deleted/>
- </Menu>
- <Menu>
   <Name>Office</Name>
   <Layout>
    <Merge type="files"/>
@@ -128,31 +124,33 @@
  </Menu>
  <Menu>
   <Name>System</Name>
-  <Layout>
-   <Merge type="menus"/>
-   <Menuname>Terminal</Menuname>
-   <Menuname>ScreenSavers</Menuname>
-   <Menuname>More</Menuname>
-   <Merge type="files"/>
-   <Filename>gay.pancake.lsfg-vk-ui.desktop</Filename>
-   <Filename>org.kde.dolphin.desktop</Filename>
-   <Filename>ca.desrt.dconf-editor.desktop</Filename>
-   <Filename>org.kde.kmenuedit.desktop</Filename>
-   <Filename>org.kde.konsole.desktop</Filename>
-   <Filename>virt-manager.desktop</Filename>
-   <Filename>org.kde.plasma-systemmonitor.desktop</Filename>
-   <Filename>com.shellyorg.shelly.desktop</Filename>
-   <Filename>timeshift-gtk.desktop</Filename>
-   <Filename>systemsettings.desktop</Filename>
-   <Filename>nm-connection-editor.desktop</Filename>
-   <Filename>cups.desktop</Filename>
-   <Filename>org.kde.partitionmanager.desktop</Filename>
-  </Layout>
   <Exclude>
    <Filename>org.bleachbit.BleachBit.desktop</Filename>
    <Filename>lstopo.desktop</Filename>
    <Filename>org.kde.kinfocenter.desktop</Filename>
   </Exclude>
+  <Layout>
+   <Merge type="files"/>
+   <Filename>BleachBit(SUDO).desktop</Filename>
+   <Filename>gay.pancake.lsfg-vk-ui.desktop</Filename>
+   <Filename>org.kde.dolphin.desktop</Filename>
+   <Filename>ca.desrt.dconf-editor.desktop</Filename>
+   <Filename>org.kde.kmenuedit.desktop</Filename>
+   <Filename>System_Maintenance.desktop</Filename>
+   <Filename>org.kde.konsole.desktop</Filename>
+   <Filename>virt-manager.desktop</Filename>
+   <Filename>org.kde.plasma-systemmonitor.desktop</Filename>
+   <Merge type="menus"/>
+   <Menuname>Terminal</Menuname>
+   <Menuname>ScreenSavers</Menuname>
+   <Filename>com.shellyorg.shelly.desktop</Filename>
+   <Filename>timeshift-gtk.desktop</Filename>
+   <Filename>systemsettings.desktop</Filename>
+   <Menuname>More</Menuname>
+   <Filename>nm-connection-editor.desktop</Filename>
+   <Filename>cups.desktop</Filename>
+   <Filename>org.kde.partitionmanager.desktop</Filename>
+  </Layout>
  </Menu>
  <Menu>
   <Name>Development</Name>
