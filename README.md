@@ -81,10 +81,6 @@ cd kde-config
 ```bash
 chmod +x install.sh
 ```
-3. Make the script executable
-```bash
-chmod +x install.sh
-```
 
 For nixos
 ```bash
