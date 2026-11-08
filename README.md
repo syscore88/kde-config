@@ -82,7 +82,7 @@ cd kde-config
 chmod +x install.sh
 ```
 
-For nixos
+  For nixos
 ```bash
 chmod +x nix.sh
 ```
@@ -93,12 +93,13 @@ chmod +x nix.sh
 ./install.sh
 ```
 
-For nixos
+  For nixos
 ```bash
 ./nix.sh
 ```
 
 ---
+
 <img width="1920" height="1080" alt="Zrzut ekranu_20260915_202411" src="https://github.com/user-attachments/assets/9e4e2dbe-8267-478b-ae59-cc132e1ce962" />
 
 
