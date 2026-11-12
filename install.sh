@@ -314,7 +314,7 @@ case "$DISTRO_FAMILY" in
             kde-gtk-config kinfocenter kio-admin kdeplasma-addons
             aspell-pl kaccounts-providers dolphin konsole 
             dolphin-plugins spectacle gwenview okular ark kate
-            plasma-systemmonitor kcalc kup bup krdc krfb
+            plasma-systemmonitor kcalc kup bup krdc krfb pulseaudio-utils rtkit
         )
         ;;
     fedora)
