@@ -100,27 +100,28 @@
  </Menu>
  <Menu>
   <Name>Utilities</Name>
+  <Exclude>
+   <Filename>org.kde.kate.desktop</Filename>
+   <Filename>vim.desktop</Filename>
+  </Exclude>
   <Layout>
-   <Merge type="menus"/>
-   <Menuname>XUtilities</Menuname>
-   <Menuname>More</Menuname>
    <Merge type="files"/>
    <Filename>org.kde.ark.desktop</Filename>
    <Filename>org.bleachbit.BleachBit.desktop</Filename>
    <Filename>com.github.tchx84.Flatseal.desktop</Filename>
+   <Filename>org.kde.kcalc.desktop</Filename>
    <Filename>org.kde.kwrite.desktop</Filename>
+   <Merge type="menus"/>
+   <Menuname>XUtilities</Menuname>
    <Filename>it.mijorus.gearlever.desktop</Filename>
    <Filename>org.kde.qrca.desktop</Filename>
    <Filename>com.shellyorg.shelly.desktop</Filename>
    <Filename>org.kde.spectacle.desktop</Filename>
    <Filename>org.kde.plasma.emojier.desktop</Filename>
    <Filename>ventoy.desktop</Filename>
+   <Menuname>More</Menuname>
    <Filename>winetricks.desktop</Filename>
   </Layout>
-  <Exclude>
-   <Filename>org.kde.kate.desktop</Filename>
-   <Filename>vim.desktop</Filename>
-  </Exclude>
  </Menu>
  <Menu>
   <Name>System</Name>
