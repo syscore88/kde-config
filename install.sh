@@ -303,7 +303,7 @@ case "$DISTRO_FAMILY" in
             kde-gtk-config kinfocenter kio-admin kdeplasma-addons
             aspell-pl kaccounts-providers dolphin konsole
             dolphin-plugins spectacle gwenview okular ark kate
-            plasma-systemmonitor kcalc kup bup qrca 
+            plasma-systemmonitor kcalc kup bup qrca krdc krfb
         )
         ;;
     void)
@@ -314,17 +314,17 @@ case "$DISTRO_FAMILY" in
             kde-gtk-config kinfocenter kio-admin kdeplasma-addons
             aspell-pl kaccounts-providers dolphin konsole 
             dolphin-plugins spectacle gwenview okular ark kate
-            plasma-systemmonitor kcalc kup bup
+            plasma-systemmonitor kcalc kup bup krdc krfb
         )
         ;;
     fedora)
-        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc okular)
+        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc krdc krfb okular)
         ;;
     opensuse)
-        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc okular)
+        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc krdc krfb okular)
         ;;
     debian)
-        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc okular)
+        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc krdc krfb okular)
         ;;
 esac
 
