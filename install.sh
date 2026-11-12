@@ -318,13 +318,13 @@ case "$DISTRO_FAMILY" in
         )
         ;;
     fedora)
-        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc)
+        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc okular)
         ;;
     opensuse)
-        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc)
+        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc okular)
         ;;
     debian)
-        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc)
+        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc okular)
         ;;
 esac
 
