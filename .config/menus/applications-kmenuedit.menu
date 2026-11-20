@@ -128,26 +128,24 @@
   </Exclude>
   <Layout>
    <Merge type="files"/>
+   <Filename>BleachBit (Root).desktop</Filename>
    <Filename>gay.pancake.lsfg-vk-ui.desktop</Filename>
-   <Filename>org.kde.discover.desktop</Filename>
    <Filename>org.kde.dolphin.desktop</Filename>
    <Filename>ca.desrt.dconf-editor.desktop</Filename>
    <Filename>org.kde.kmenuedit.desktop</Filename>
-   <Filename>org.fedoraproject.MediaWriter.desktop</Filename>
-   <Filename>gcdemu.desktop</Filename>
    <Filename>System_Maintenance.desktop</Filename>
    <Filename>org.kde.konsole.desktop</Filename>
    <Filename>virt-manager.desktop</Filename>
    <Filename>org.kde.plasma-systemmonitor.desktop</Filename>
    <Merge type="menus"/>
    <Menuname>Terminal</Menuname>
-   <Filename>org.kde.kjournaldbrowser.desktop</Filename>
-   <Filename>org.kde.drkonqi.coredump.gui.desktop</Filename>
    <Menuname>ScreenSavers</Menuname>
+   <Filename>com.shellyorg.shelly.desktop</Filename>
    <Filename>timeshift-gtk.desktop</Filename>
    <Filename>systemsettings.desktop</Filename>
    <Menuname>More</Menuname>
-   <Filename>firewall-config.desktop</Filename>
+   <Filename>nm-connection-editor.desktop</Filename>
+   <Filename>cups.desktop</Filename>
    <Filename>org.kde.partitionmanager.desktop</Filename>
   </Layout>
  </Menu>
