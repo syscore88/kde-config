@@ -30,6 +30,8 @@ exec >>"$TMP_LOG" 2>&1
 
 cleanup_on_exit() {
     local exit_code=$?
+    set +e
+    trap - ERR
     [ -n "${SUDO_KEEPALIVE_PID:-}" ] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
     printf '\033[?7h' >&3
     if [ "$exit_code" -ne 0 ]; then
@@ -45,7 +47,7 @@ cleanup_on_exit() {
     local do_reboot=0
     [ "$exit_code" -eq 0 ] && [ "${DO_REBOOT:-0}" = "1" ] && do_reboot=1
     if [ "${SUDO_READY:-0}" = "1" ]; then
-        sudo sh -c 'rm -f "$1" "$2"; systemctl try-restart polkit 2>/dev/null; if [ "$3" = 1 ]; then systemctl reboot 2>/dev/null || reboot; fi; exit 0' _ \
+        sudo sh -c 'rm -f "$1" "$2"; systemctl try-restart polkit 2>/dev/null || true; if [ "$3" = 1 ]; then systemctl reboot 2>/dev/null || reboot; fi' _ \
             "${RUN0_NOPASSWD_FILE:-/etc/polkit-1/rules.d/51-run0-nopasswd.rules}" \
             "/etc/sudoers.d/99-temp-installer" \
             "$do_reboot" || true
@@ -56,7 +58,7 @@ trap cleanup_on_exit EXIT
 _pick_msg() { [[ "$SCRIPT_LANG" == "pl" ]] && echo "$1" || echo "$2"; }
 _log_write() {
     echo -e "$1"
-    echo -e "$1" >&3
+    printf '\r\033[K%b\n' "$1" >&3
     cp -f "$TMP_LOG" "$LOG_FILE" 2>/dev/null || true
 }
 log_info()  { local m; m="$(_pick_msg "$1" "$2")"; _log_write "${INFO}==> $m${NC}"; }
@@ -112,7 +114,7 @@ else
     MSG_FINALIZE="Finalizing..."
 fi
 
-TOTAL_STEPS=7
+TOTAL_STEPS=5
 
 CURRENT_USER=$(whoami)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -128,10 +130,10 @@ fi
 
 RUN0_NOPASSWD_FILE="/etc/polkit-1/rules.d/51-run0-nopasswd.rules"
 USE_RUN0=0
-if ! command -v visudo >/dev/null 2>&1; then
-    USE_RUN0=1
-elif command -v run0 >/dev/null 2>&1 && sudo --version 2>/dev/null | grep -qi "run0"; then
-    USE_RUN0=1
+if command -v run0 >/dev/null 2>&1; then
+    if ! command -v visudo >/dev/null 2>&1 || sudo --version 2>/dev/null | grep -qi "run0"; then
+        USE_RUN0=1
+    fi
 fi
 
 # ==========================================================
@@ -140,6 +142,7 @@ fi
 printf '\033[?7h' >&3
 SUDO_READY=0
 if [[ "$USE_RUN0" -eq 1 ]]; then
+    sudo mkdir -p "$(dirname "$RUN0_NOPASSWD_FILE")"
     sudo tee "$RUN0_NOPASSWD_FILE" > /dev/null <<POLKIT_RULE_EOF
 polkit.addRule(function(action, subject) {
     if (subject.user == "$CURRENT_USER") {
@@ -163,17 +166,19 @@ else
     ) &
     SUDO_KEEPALIVE_PID=$!
 
-    SUDOERS_TMP="$(mktemp)"
-    echo "$CURRENT_USER ALL=(ALL) NOPASSWD: ALL" > "$SUDOERS_TMP"
-    if sudo visudo -cf "$SUDOERS_TMP" >/dev/null; then
-        sudo mkdir -p /etc/sudoers.d
-        sudo install -m 0440 -o root -g root "$SUDOERS_TMP" /etc/sudoers.d/99-temp-installer
-    else
+    if command -v visudo >/dev/null 2>&1 && sudo grep -Eq '^[#@]includedir[[:space:]]+/etc/sudoers\.d' /etc/sudoers 2>/dev/null; then
+        SUDOERS_TMP="$(mktemp)"
+        echo "$CURRENT_USER ALL=(ALL) NOPASSWD: ALL" > "$SUDOERS_TMP"
+        if sudo visudo -cf "$SUDOERS_TMP" >/dev/null; then
+            sudo mkdir -p /etc/sudoers.d
+            sudo install -m 0440 -o root -g root "$SUDOERS_TMP" /etc/sudoers.d/99-temp-installer
+        else
+            rm -f "$SUDOERS_TMP"
+            log_err "Nieprawidłowa składnia reguły sudoers - przerywam." "Invalid sudoers rule syntax - aborting."
+            exit 1
+        fi
         rm -f "$SUDOERS_TMP"
-        log_err "Nieprawidłowa składnia reguły sudoers - przerywam." "Invalid sudoers rule syntax - aborting."
-        exit 1
     fi
-    rm -f "$SUDOERS_TMP"
     SUDO_READY=1
 fi
 
@@ -181,13 +186,9 @@ printf '\033[?7l' >&3
 
 show_progress 0 $TOTAL_STEPS "$MSG_PREP"
 
-show_progress 1 $TOTAL_STEPS "$MSG_PREP"
-
 # ==========================================================
 # 2. KONFIGURACJA SYSTEMOWA (SUDO)
 # ==========================================================
-show_progress 2 $TOTAL_STEPS "$MSG_OPTIMIZE"
-
 NIXOS_DIR="/etc/nixos"
 NIXOS_CONF="$NIXOS_DIR/configuration.nix"
 KDE_MODULE="$NIXOS_DIR/kde-visual.nix"
@@ -198,25 +199,31 @@ if [[ ! -f "$NIXOS_CONF" ]]; then
 fi
 
 if [[ -f "$SCRIPT_DIR/piwo.png" ]]; then
-    cp -af "$SCRIPT_DIR/piwo.png" "$HOME/.face" 2>/dev/null || true
-    chmod 644 "$HOME/.face" 2>/dev/null || true
+    install -m 644 "$SCRIPT_DIR/piwo.png" "$HOME/.face" 2>/dev/null || true
+    install -m 644 "$SCRIPT_DIR/piwo.png" "$HOME/.face.icon" 2>/dev/null || true
 
     AVATAR_DEST="/var/lib/AccountsService/icons/$CURRENT_USER"
     ACCOUNTS_FILE="/var/lib/AccountsService/users/$CURRENT_USER"
 
-    sudo mkdir -p /var/lib/AccountsService/icons/ /var/lib/AccountsService/users/ || true
-    sudo cp -f "$SCRIPT_DIR/piwo.png" "$AVATAR_DEST" || true
-    sudo chmod 644 "$AVATAR_DEST" || true
+    sudo mkdir -p /var/lib/AccountsService/icons /var/lib/AccountsService/users || true
+    sudo install -m 644 -o root -g root "$SCRIPT_DIR/piwo.png" "$AVATAR_DEST" || true
 
-    if [[ ! -f "$ACCOUNTS_FILE" ]]; then
-        echo -e "[User]\nIcon=$AVATAR_DEST" | sudo tee "$ACCOUNTS_FILE" > /dev/null
+    if ! sudo test -f "$ACCOUNTS_FILE"; then
+        printf '[User]\nIcon=%s\n' "$AVATAR_DEST" | sudo tee "$ACCOUNTS_FILE" > /dev/null
     elif sudo grep -q "^Icon=" "$ACCOUNTS_FILE"; then
         sudo sed -i "s|^Icon=.*|Icon=$AVATAR_DEST|" "$ACCOUNTS_FILE" || true
+    elif sudo grep -q "^\[User\]" "$ACCOUNTS_FILE"; then
+        sudo sed -i "/^\[User\]/a Icon=$AVATAR_DEST" "$ACCOUNTS_FILE" || true
     else
-        echo "Icon=$AVATAR_DEST" | sudo tee -a "$ACCOUNTS_FILE" > /dev/null
+        printf '\n[User]\nIcon=%s\n' "$AVATAR_DEST" | sudo tee -a "$ACCOUNTS_FILE" > /dev/null
     fi
 
     sudo systemctl restart accounts-daemon 2>/dev/null || true
+    if command -v busctl >/dev/null 2>&1; then
+        busctl call org.freedesktop.Accounts \
+            "/org/freedesktop/Accounts/User$(id -u "$CURRENT_USER" 2>/dev/null || id -u)" \
+            org.freedesktop.Accounts.User SetIconFile s "$AVATAR_DEST" 2>/dev/null || true
+    fi
 fi
 
 KDE_MODULE_TMP="$(mktemp)"
@@ -226,13 +233,15 @@ cat > "$KDE_MODULE_TMP" <<'NIX_EOF'
 {
 NIX_EOF
 
+HAS_LOGIN_WALLPAPER=0
 if [[ -f "$SCRIPT_DIR/login-wallpaper.png" ]]; then
     sudo mkdir -p "$NIXOS_DIR/wallpapers"
     sudo install -m 644 -o root -g root "$SCRIPT_DIR/login-wallpaper.png" "$NIXOS_DIR/wallpapers/login-wallpaper.png"
+    HAS_LOGIN_WALLPAPER=1
     cat >> "$KDE_MODULE_TMP" <<'NIX_EOF'
   environment.etc."plasmalogin.conf".text = ''
     [Greeter][Wallpaper][org.kde.image][General]
-    Image=file:///etc/nixos/wallpapers/login-wallpaper.png
+    Image=file://${./wallpapers/login-wallpaper.png}
   '';
 NIX_EOF
 fi
@@ -242,17 +251,30 @@ sudo install -m 644 -o root -g root "$KDE_MODULE_TMP" "$KDE_MODULE"
 rm -f "$KDE_MODULE_TMP"
 
 sudo cp -f "$NIXOS_CONF" "$NIXOS_CONF.bak"
-if ! sudo grep -q "kde-visual.nix" "$NIXOS_CONF"; then
-    if sudo grep -q "\./hardware-configuration\.nix" "$NIXOS_CONF"; then
-        sudo sed -i 's|\./hardware-configuration\.nix|& ./kde-visual.nix|' "$NIXOS_CONF"
-    else
+if ! sudo grep -Eq '^[[:space:]]*[^#]*kde-visual\.nix' "$NIXOS_CONF"; then
+    if sudo grep -Eq '^[[:space:]]*[^#]*\./hardware-configuration\.nix' "$NIXOS_CONF"; then
+        sudo sed -i '/^[[:space:]]*#/! s|\./hardware-configuration\.nix|& ./kde-visual.nix|' "$NIXOS_CONF"
+    fi
+    if ! sudo grep -Eq '^[[:space:]]*[^#]*kde-visual\.nix' "$NIXOS_CONF"; then
+        sudo cp -f "$NIXOS_CONF.bak" "$NIXOS_CONF"
         log_err "Nie można dodać ./kde-visual.nix do imports w $NIXOS_CONF - dodaj ręcznie." \
                 "Cannot add ./kde-visual.nix to imports in $NIXOS_CONF - add it manually."
         exit 1
     fi
 fi
 
-[[ -e /etc/plasmalogin.conf && ! -L /etc/plasmalogin.conf ]] && sudo rm -f /etc/plasmalogin.conf
+if [[ -d "$NIXOS_DIR/.git" ]] && command -v git >/dev/null 2>&1; then
+    sudo git -C "$NIXOS_DIR" add -N kde-visual.nix 2>/dev/null || true
+    if [[ "$HAS_LOGIN_WALLPAPER" -eq 1 ]]; then
+        sudo git -C "$NIXOS_DIR" add -N wallpapers/login-wallpaper.png 2>/dev/null || true
+    fi
+fi
+
+if [[ "$HAS_LOGIN_WALLPAPER" -eq 1 && -e /etc/plasmalogin.conf && ! -L /etc/plasmalogin.conf ]]; then
+    sudo rm -f /etc/plasmalogin.conf
+fi
+
+show_progress 1 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
 if ! sudo nixos-rebuild switch; then
     sudo cp -f "$NIXOS_CONF.bak" "$NIXOS_CONF"
@@ -269,69 +291,122 @@ safe_copy_dir() {
     return 0
 }
 
+set_kde_ini_key() {
+    local file="$1" header="$2" key="$3" value="$4"
+    local tmp_ini
+    tmp_ini="$(mktemp)"
+    mkdir -p "$(dirname "$file")"
+    touch "$file"
+
+    awk -v hdr="$header" -v k="$key" -v v="$value" '
+        BEGIN { in_sec = 0; found_sec = 0; updated = 0 }
+        /^[[:space:]]*\[.*\][[:space:]]*$/ {
+            if (in_sec && !updated) {
+                print k "=" v
+                updated = 1
+            }
+            if ($0 == hdr) {
+                in_sec = 1
+                found_sec = 1
+            } else {
+                in_sec = 0
+            }
+            print
+            next
+        }
+        {
+            if (in_sec && $0 ~ "^[[:space:]]*" k "[[:space:]]*=") {
+                if (!updated) {
+                    print k "=" v
+                    updated = 1
+                }
+                next
+            }
+            print
+        }
+        END {
+            if (!found_sec) {
+                if (NR > 0) print ""
+                print hdr
+                print k "=" v
+            } else if (in_sec && !updated) {
+                print k "=" v
+            }
+        }
+    ' "$file" > "$tmp_ini"
+
+    mv -f "$tmp_ini" "$file"
+}
+
 TARGET_DIR="$HOME/.local/share/wallpapers"
 mkdir -p "$TARGET_DIR"
 
-show_progress 3 $TOTAL_STEPS "$MSG_OPTIMIZE"
+show_progress 2 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
 # ==========================================================
 # 3. KONFIGURACJA WIZUALNA (KONTO UŻYTKOWNIKA)
 # ==========================================================
 systemctl --user stop plasma-plasmashell.service 2>/dev/null || true
-kquitapp6 plasmashell 2>/dev/null || killall -9 plasmashell 2>/dev/null || true
+kquitapp6 plasmashell 2>/dev/null || killall -9 plasmashell 2>/dev/null || pkill -9 -u "$CURRENT_USER" -x plasmashell 2>/dev/null || true
 sleep 2
 
-show_progress 4 $TOTAL_STEPS "$MSG_OPTIMIZE"
-
-safe_copy_dir "$SCRIPT_DIR/.config" ~/.config
-safe_copy_dir "$SCRIPT_DIR/.local" ~/.local
-safe_copy_dir "$SCRIPT_DIR/.icons" ~/.icons
+safe_copy_dir "$SCRIPT_DIR/.config" "$HOME/.config"
+safe_copy_dir "$SCRIPT_DIR/.local" "$HOME/.local"
+safe_copy_dir "$SCRIPT_DIR/.icons" "$HOME/.icons"
 
 LOCKSCREEN_CONF="$HOME/.config/kscreenlockerrc"
 LOCKSCREEN_WALLPAPER_PATH="$HOME/.local/share/wallpapers/lock_screen.jpg"
 LOCKSCREEN_WALLPAPER_URI="file://$LOCKSCREEN_WALLPAPER_PATH"
 
 if [[ -f "$LOCKSCREEN_WALLPAPER_PATH" ]]; then
+    mkdir -p "$(dirname "$LOCKSCREEN_CONF")"
     touch "$LOCKSCREEN_CONF"
     if command -v kwriteconfig6 &>/dev/null; then
         kwriteconfig6 --file "$LOCKSCREEN_CONF" \
             --group Greeter --group Wallpaper --group org.kde.image --group General \
             --key Image "$LOCKSCREEN_WALLPAPER_URI" || true
     else
-        SECTION_HEADER="[Greeter][Wallpaper][org.kde.image][General]"
-        if grep -qF "$SECTION_HEADER" "$LOCKSCREEN_CONF" 2>/dev/null; then
-            if awk -v hdr="$SECTION_HEADER" 'BEGIN{f=0} $0==hdr{f=1} f && /^Image=/{found=1} END{exit !found}' "$LOCKSCREEN_CONF"; then
-                sed -i "\|^\[Greeter\]\[Wallpaper\]\[org\.kde\.image\]\[General\]\$|,/^\[/{s|^Image=.*|Image=$LOCKSCREEN_WALLPAPER_URI|}" "$LOCKSCREEN_CONF" || true
-            else
-                sed -i "\|^\[Greeter\]\[Wallpaper\]\[org\.kde\.image\]\[General\]\$|a Image=$LOCKSCREEN_WALLPAPER_URI" "$LOCKSCREEN_CONF" || true
-            fi
-        else
-            printf '\n%s\nImage=%s\n' "$SECTION_HEADER" "$LOCKSCREEN_WALLPAPER_URI" >> "$LOCKSCREEN_CONF"
-        fi
+        set_kde_ini_key "$LOCKSCREEN_CONF" "[Greeter][Wallpaper][org.kde.image][General]" "Image" "$LOCKSCREEN_WALLPAPER_URI"
     fi
     chmod 644 "$LOCKSCREEN_CONF" || true
 fi
 
-show_progress 5 $TOTAL_STEPS "$MSG_OPTIMIZE"
+show_progress 3 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
-rm -rf ~/.cache/icon-cache.kcache ~/.cache/plasma* ~/.cache/ico*
+rm -rf "$HOME/.cache/icon-cache.kcache" "$HOME/.cache/icon-cache"* "$HOME/.cache/plasma"*
 
 WALLPAPER_PATH="$HOME/.local/share/wallpapers/wallpaper.jpg"
 AUTOSTART_DIR="$HOME/.config/autostart"
-mkdir -p "$AUTOSTART_DIR"
+HELPER_BIN_DIR="$HOME/.local/bin"
+HELPER_SCRIPT="$HELPER_BIN_DIR/force-wallpaper.sh"
 
-cat > "$AUTOSTART_DIR/force-wallpaper.desktop" <<EOF
+if [[ -f "$WALLPAPER_PATH" ]]; then
+    mkdir -p "$AUTOSTART_DIR" "$HELPER_BIN_DIR"
+    cat > "$HELPER_SCRIPT" <<EOF
+#!/usr/bin/env bash
+for i in {1..30}; do
+    if command -v plasma-apply-wallpaperimage >/dev/null 2>&1 && plasma-apply-wallpaperimage "$WALLPAPER_PATH"; then
+        rm -f "$AUTOSTART_DIR/force-wallpaper.desktop" "$HELPER_SCRIPT"
+        exit 0
+    fi
+    sleep 2
+done
+EOF
+    chmod 755 "$HELPER_SCRIPT"
+
+    cat > "$AUTOSTART_DIR/force-wallpaper.desktop" <<EOF
 [Desktop Entry]
 Type=Application
 Name=Wymuszenie Tapety
-Exec=bash -c 'for i in {1..30}; do plasma-apply-wallpaperimage "$WALLPAPER_PATH" && rm -f "$AUTOSTART_DIR/force-wallpaper.desktop" && break; sleep 2; done'
+Exec="$HELPER_SCRIPT"
 Hidden=false
 NoDisplay=true
 X-KDE-autostart-condition=
 EOF
-chmod +x "$AUTOSTART_DIR/force-wallpaper.desktop"
+    chmod 644 "$AUTOSTART_DIR/force-wallpaper.desktop"
+fi
 
-show_progress 6 $TOTAL_STEPS "$MSG_OPTIMIZE"
+show_progress 4 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
 if command -v kbuildsycoca6 &>/dev/null; then
     kbuildsycoca6 --noincremental &>/dev/null || true
@@ -341,7 +416,7 @@ fi
 # 4. ZAKOŃCZENIE I SPRZĄTANIE
 # ==========================================================
 
-show_progress 7 $TOTAL_STEPS "$MSG_FINALIZE"
+show_progress 5 $TOTAL_STEPS "$MSG_FINALIZE"
 printf '\n\n' >&3
 
 if [[ "$SCRIPT_LANG" == "pl" ]]; then

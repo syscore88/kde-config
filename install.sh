@@ -1,9 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # =========================================
 # SKRYPT KONFIGURACJI WIZUALNEJ KDE PLASMA
 # =========================================
 
 set -Eeuo pipefail
+export DEBIAN_FRONTEND=noninteractive
 export PATH="/usr/sbin:/sbin:$PATH"
 
 FAILED_PACKAGES=()
@@ -33,6 +34,8 @@ exec >>"$TMP_LOG" 2>&1
 
 cleanup_on_exit() {
     local exit_code=$?
+    set +e
+    trap - ERR
     declare -F restore_packagekit >/dev/null && restore_packagekit || true
     [ -n "${SUDO_KEEPALIVE_PID:-}" ] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
     printf '\033[?7h' >&3
@@ -57,7 +60,7 @@ cleanup_on_exit() {
     local do_reboot=0
     [ "$exit_code" -eq 0 ] && [ "${DO_REBOOT:-0}" = "1" ] && do_reboot=1
     if [ "${SUDO_READY:-0}" = "1" ]; then
-        sudo sh -c 'rm -f "$1" "$2"; systemctl try-restart polkit 2>/dev/null; if [ "$3" = 1 ]; then systemctl reboot 2>/dev/null || reboot; fi; exit 0' _ \
+        sudo sh -c 'rm -f "$1" "$2"; systemctl try-restart polkit 2>/dev/null || true; if [ "$3" = 1 ]; then systemctl reboot 2>/dev/null || reboot; fi' _ \
             "${RUN0_NOPASSWD_FILE:-/etc/polkit-1/rules.d/51-run0-nopasswd.rules}" \
             "/etc/sudoers.d/99-temp-installer" \
             "$do_reboot" || true
@@ -68,7 +71,7 @@ trap cleanup_on_exit EXIT
 _pick_msg() { [[ "$SCRIPT_LANG" == "pl" ]] && echo "$1" || echo "$2"; }
 _log_write() {
     echo -e "$1"
-    echo -e "$1" >&3
+    printf '\r\033[K%b\n' "$1" >&3
     cp -f "$TMP_LOG" "$LOG_FILE" 2>/dev/null || true
 }
 log_info()  { local m; m="$(_pick_msg "$1" "$2")"; _log_write "${INFO}==> $m${NC}"; }
@@ -133,7 +136,7 @@ show_progress() {
     local total=$2
     local msg=$3
     local percent=$(( step * 100 / total ))
-    
+
     local cols
     cols=$(stty size </dev/tty 2>/dev/null || true)
     cols="${cols##* }"
@@ -176,22 +179,26 @@ else
     MSG_FINALIZE="Finalizing..."
 fi
 
-TOTAL_STEPS=12
+TOTAL_STEPS=10
 
 CURRENT_USER=$(whoami)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ "$EUID" -eq 0 ]]; then
-    echo -e "${ERR}[X] Nie uruchamiaj skryptu jako root. Uruchom jako zwykły użytkownik z sudo.${NC}" >&3
+    if [[ "$SCRIPT_LANG" == "pl" ]]; then
+        echo -e "${ERR}[X] Nie uruchamiaj skryptu jako root. Uruchom jako zwykły użytkownik z sudo.${NC}" >&3
+    else
+        echo -e "${ERR}[X] Do not run this script as root. Run as a normal user with sudo.${NC}" >&3
+    fi
     exit 1
 fi
 
 RUN0_NOPASSWD_FILE="/etc/polkit-1/rules.d/51-run0-nopasswd.rules"
 USE_RUN0=0
-if ! command -v visudo >/dev/null 2>&1; then
-    USE_RUN0=1
-elif command -v run0 >/dev/null 2>&1 && sudo --version 2>/dev/null | grep -qi "run0"; then
-    USE_RUN0=1
+if command -v run0 >/dev/null 2>&1; then
+    if ! command -v visudo >/dev/null 2>&1 || sudo --version 2>/dev/null | grep -qi "run0"; then
+        USE_RUN0=1
+    fi
 fi
 
 # ==========================================================
@@ -200,6 +207,7 @@ fi
 printf '\033[?7h' >&3
 SUDO_READY=0
 if [[ "$USE_RUN0" -eq 1 ]]; then
+    sudo mkdir -p "$(dirname "$RUN0_NOPASSWD_FILE")"
     sudo tee "$RUN0_NOPASSWD_FILE" > /dev/null <<POLKIT_RULE_EOF
 polkit.addRule(function(action, subject) {
     if (subject.user == "$CURRENT_USER") {
@@ -223,20 +231,19 @@ else
     ) &
     SUDO_KEEPALIVE_PID=$!
 
-    SUDOERS_TMP="$(mktemp)"
-    echo "$CURRENT_USER ALL=(ALL) NOPASSWD: ALL" > "$SUDOERS_TMP"
-    if sudo visudo -cf "$SUDOERS_TMP" >/dev/null; then
-        sudo install -m 0440 -o root -g root "$SUDOERS_TMP" /etc/sudoers.d/99-temp-installer
-    else
-        rm -f "$SUDOERS_TMP"
-        if [[ "$SCRIPT_LANG" == "pl" ]]; then
-            echo -e "${ERR}[X] Nieprawidłowa składnia reguły sudoers - przerywam.${NC}" >&3
+    if command -v visudo >/dev/null 2>&1; then
+        SUDOERS_TMP="$(mktemp)"
+        echo "$CURRENT_USER ALL=(ALL) NOPASSWD: ALL" > "$SUDOERS_TMP"
+        if sudo visudo -cf "$SUDOERS_TMP" >/dev/null; then
+            sudo mkdir -p /etc/sudoers.d
+            sudo install -m 0440 -o root -g root "$SUDOERS_TMP" /etc/sudoers.d/99-temp-installer
         else
-            echo -e "${ERR}[X] Invalid sudoers rule syntax - aborting.${NC}" >&3
+            rm -f "$SUDOERS_TMP"
+            log_err "Nieprawidłowa składnia reguły sudoers - przerywam." "Invalid sudoers rule syntax - aborting."
+            exit 1
         fi
-        exit 1
+        rm -f "$SUDOERS_TMP"
     fi
-    rm -f "$SUDOERS_TMP"
     SUDO_READY=1
 fi
 
@@ -253,12 +260,12 @@ show_progress 1 $TOTAL_STEPS "$MSG_PREP"
 # ==========================================================
 detect_distro() {
     if [[ ! -f /etc/os-release ]]; then
-        log_warn "Nie znaleziono /etc/os-release - nie można wykryć dystrybucji." \
+        log_err "Nie znaleziono /etc/os-release - nie można wykryć dystrybucji." \
                 "Could not find /etc/os-release - unable to detect the distribution."
         exit 1
     fi
     source /etc/os-release
-    local id_like="${ID_LIKE:-${ID:-}}"
+    local id_like="${ID:-} ${ID_LIKE:-}"
 
     case "${id_like,,}" in
         *arch*) DISTRO_FAMILY="arch" ;;
@@ -286,9 +293,9 @@ install_one_package() {
     case "$DISTRO_FAMILY" in
         arch)     sudo pacman -S --noconfirm --needed "$pkg" ;;
         void)     sudo xbps-install -y "$pkg" ;;
-        fedora)   sudo dnf install -y "$pkg" ;;
-        debian)   sudo apt-get install -y "$pkg" ;;
-        opensuse) sudo zypper --non-interactive install --no-recommends "$pkg" ;;
+        fedora)   sudo dnf install -yq "$pkg" ;;
+        debian)   sudo apt-get install -yq "$pkg" ;;
+        opensuse) sudo zypper -nq install --no-recommends -y "$pkg" ;;
         *) return 1 ;;
     esac
 }
@@ -308,20 +315,20 @@ case "$DISTRO_FAMILY" in
         ;;
     void)
         PACKAGES=(
-            dbus elogind NetworkManager sddm xorg-minimal mesa-dri 
+            dbus elogind NetworkManager sddm xorg-minimal mesa-dri
             plasma-workspace plasma-desktop kwin xorg-server-xwayland
             plasma-firewall plasma-nm plasma-pa kscreen bluedevil
             kde-gtk-config kinfocenter kio-admin kdeplasma-addons
-            aspell-pl kaccounts-providers dolphin konsole 
+            aspell-pl kaccounts-providers dolphin konsole
             dolphin-plugins spectacle gwenview okular ark kate
             plasma-systemmonitor kcalc kup bup krdc krfb pulseaudio-utils rtkit
         )
         ;;
     fedora)
-        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc krdc krfb okular)
+        PACKAGES=(kio-admin dolphin-plugins kup bup qrca kcalc krdc krfb okular)
         ;;
     opensuse)
-        PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc krdc krfb okular)
+        PACKAGES=(kio-admin dolphin-plugins kup bup qrca kcalc krdc krfb okular)
         ;;
     debian)
         PACKAGES=(kio-admin dolphin-plugins kup-backup bup qrca kcalc krdc krfb okular)
@@ -333,7 +340,7 @@ show_progress 3 $TOTAL_STEPS "$MSG_INSTALL"
 install_packages() {
     if [[ "$DISTRO_FAMILY" == "debian" ]]; then
         wait_for_pkg_lock
-        sudo apt-get update || true
+        sudo apt-get update -yq || true
     elif [[ "$DISTRO_FAMILY" == "opensuse" ]]; then
         wait_for_pkg_lock
     elif [[ "$DISTRO_FAMILY" == "void" ]]; then
@@ -344,58 +351,146 @@ install_packages() {
 
     show_progress 4 $TOTAL_STEPS "$MSG_INSTALL"
 
-    local installed=()
-
     wait_for_pkg_lock
 
     for pkg in "${PACKAGES[@]}"; do
-        if install_one_package "$pkg" > /tmp/install-"$pkg".log 2>&1; then
-            installed+=("$pkg")
-        else
-            FAILED_PACKAGES+=("$pkg (log: /tmp/install-$pkg.log)")
+        if ! install_one_package "$pkg"; then
+            FAILED_PACKAGES+=("$pkg")
         fi
     done
-
-    show_progress 5 $TOTAL_STEPS "$MSG_INSTALL"
 }
 
 install_packages
-show_progress 6 $TOTAL_STEPS "$MSG_INSTALL"
+show_progress 5 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
 # ==========================================================
 # 3. KONFIGURACJA SYSTEMOWA (SUDO)
 # ==========================================================
-show_progress 7 $TOTAL_STEPS "$MSG_OPTIMIZE"
-
 restore_packagekit
 
-if [[ -f "$SCRIPT_DIR/piwo.png" ]]; then
-    sudo mkdir -p /usr/share/plasma/avatars/ || true
-    sudo cp -f "$SCRIPT_DIR/piwo.png" /usr/share/plasma/avatars/piwo.png || true
-    sudo chmod 644 /usr/share/plasma/avatars/piwo.png || true
-
-    sudo mkdir -p /var/lib/AccountsService/icons/ || true
-    sudo cp -f "$SCRIPT_DIR/piwo.png" /var/lib/AccountsService/icons/"$CURRENT_USER" || true
-    sudo chmod 644 /var/lib/AccountsService/icons/"$CURRENT_USER" || true
-
-    ACCOUNTS_FILE="/var/lib/AccountsService/users/$CURRENT_USER"
-    sudo mkdir -p /var/lib/AccountsService/users/ || true
-
-    if [[ ! -f "$ACCOUNTS_FILE" ]]; then
-        echo -e "[User]\nIcon=/var/lib/AccountsService/icons/$CURRENT_USER" | sudo tee "$ACCOUNTS_FILE" > /dev/null || true
+set_kde_ini_key() {
+    local file="$1" header="$2" key="$3" value="$4" use_sudo="${5:-0}"
+    local tmp_ini
+    tmp_ini="$(mktemp)"
+    if [[ "$use_sudo" -eq 1 ]]; then
+        sudo mkdir -p "$(dirname "$file")"
+        sudo touch "$file"
+        sudo awk -v hdr="$header" -v k="$key" -v v="$value" '
+            BEGIN { in_sec = 0; found_sec = 0; updated = 0 }
+            /^[[:space:]]*\[.*\][[:space:]]*$/ {
+                if (in_sec && !updated) {
+                    print k "=" v
+                    updated = 1
+                }
+                if ($0 == hdr) {
+                    in_sec = 1
+                    found_sec = 1
+                } else {
+                    in_sec = 0
+                }
+                print
+                next
+            }
+            {
+                if (in_sec && $0 ~ "^[[:space:]]*" k "[[:space:]]*=") {
+                    if (!updated) {
+                        print k "=" v
+                        updated = 1
+                    }
+                    next
+                }
+                print
+            }
+            END {
+                if (!found_sec) {
+                    if (NR > 0) print ""
+                    print hdr
+                    print k "=" v
+                } else if (in_sec && !updated) {
+                    print k "=" v
+                }
+            }
+        ' "$file" > "$tmp_ini"
+        sudo install -m 644 -o root -g root "$tmp_ini" "$file"
     else
-        if sudo grep -q "^Icon=" "$ACCOUNTS_FILE"; then
-            sudo sed -i "s|^Icon=.*|Icon=/var/lib/AccountsService/icons/$CURRENT_USER|" "$ACCOUNTS_FILE" || true
-        else
-            echo "Icon=/var/lib/AccountsService/icons/$CURRENT_USER" | sudo tee -a "$ACCOUNTS_FILE" > /dev/null || true
-        fi
+        mkdir -p "$(dirname "$file")"
+        touch "$file"
+        awk -v hdr="$header" -v k="$key" -v v="$value" '
+            BEGIN { in_sec = 0; found_sec = 0; updated = 0 }
+            /^[[:space:]]*\[.*\][[:space:]]*$/ {
+                if (in_sec && !updated) {
+                    print k "=" v
+                    updated = 1
+                }
+                if ($0 == hdr) {
+                    in_sec = 1
+                    found_sec = 1
+                } else {
+                    in_sec = 0
+                }
+                print
+                next
+            }
+            {
+                if (in_sec && $0 ~ "^[[:space:]]*" k "[[:space:]]*=") {
+                    if (!updated) {
+                        print k "=" v
+                        updated = 1
+                    }
+                    next
+                }
+                print
+            }
+            END {
+                if (!found_sec) {
+                    if (NR > 0) print ""
+                    print hdr
+                    print k "=" v
+                } else if (in_sec && !updated) {
+                    print k "=" v
+                }
+            }
+        ' "$file" > "$tmp_ini"
+        mv -f "$tmp_ini" "$file"
+        chmod 644 "$file" || true
+    fi
+    rm -f "$tmp_ini"
+}
+
+if [[ -f "$SCRIPT_DIR/piwo.png" ]]; then
+    install -m 644 "$SCRIPT_DIR/piwo.png" "$HOME/.face" 2>/dev/null || true
+    install -m 644 "$SCRIPT_DIR/piwo.png" "$HOME/.face.icon" 2>/dev/null || true
+
+    sudo mkdir -p /usr/share/plasma/avatars || true
+    sudo install -m 644 -o root -g root "$SCRIPT_DIR/piwo.png" /usr/share/plasma/avatars/piwo.png || true
+
+    AVATAR_DEST="/var/lib/AccountsService/icons/$CURRENT_USER"
+    ACCOUNTS_FILE="/var/lib/AccountsService/users/$CURRENT_USER"
+
+    sudo mkdir -p /var/lib/AccountsService/icons /var/lib/AccountsService/users || true
+    sudo install -m 644 -o root -g root "$SCRIPT_DIR/piwo.png" "$AVATAR_DEST" || true
+
+    if ! sudo test -f "$ACCOUNTS_FILE"; then
+        printf '[User]\nIcon=%s\n' "$AVATAR_DEST" | sudo tee "$ACCOUNTS_FILE" > /dev/null || true
+    elif sudo grep -q "^Icon=" "$ACCOUNTS_FILE"; then
+        sudo sed -i "s|^Icon=.*|Icon=$AVATAR_DEST|" "$ACCOUNTS_FILE" || true
+    elif sudo grep -q "^\[User\]" "$ACCOUNTS_FILE"; then
+        sudo sed -i "/^\[User\]/a Icon=$AVATAR_DEST" "$ACCOUNTS_FILE" || true
+    else
+        printf '\n[User]\nIcon=%s\n' "$AVATAR_DEST" | sudo tee -a "$ACCOUNTS_FILE" > /dev/null || true
+    fi
+
+    sudo systemctl restart accounts-daemon 2>/dev/null || true
+    if command -v busctl >/dev/null 2>&1; then
+        busctl call org.freedesktop.Accounts \
+            "/org/freedesktop/Accounts/User$(id -u "$CURRENT_USER" 2>/dev/null || id -u)" \
+            org.freedesktop.Accounts.User SetIconFile s "$AVATAR_DEST" 2>/dev/null || true
     fi
 fi
 
 if [[ -f "$SCRIPT_DIR/login-wallpaper.png" ]]; then
     sudo mkdir -p /usr/share/wallpapers || true
-    sudo cp -f "$SCRIPT_DIR/login-wallpaper.png" /usr/share/wallpapers/login-wallpaper.png || true
-    sudo chmod 644 /usr/share/wallpapers/login-wallpaper.png || true
+    sudo install -m 644 -o root -g root "$SCRIPT_DIR/login-wallpaper.png" /usr/share/wallpapers/login-wallpaper.png || true
 fi
 
 PLASMALOGIN_CONF="/etc/plasmalogin.conf"
@@ -407,84 +502,92 @@ if [[ -f "$SCRIPT_DIR/login-wallpaper.png" ]]; then
         sudo kwriteconfig6 --file "$PLASMALOGIN_CONF" \
             --group Greeter --group Wallpaper --group org.kde.image --group General \
             --key Image "$GREETER_WALLPAPER_URI" || true
+        sudo chmod 644 "$PLASMALOGIN_CONF" || true
     else
-        SECTION_HEADER="[Greeter][Wallpaper][org.kde.image][General]"
-        if sudo grep -qF "$SECTION_HEADER" "$PLASMALOGIN_CONF" 2>/dev/null; then
-            if sudo awk -v hdr="$SECTION_HEADER" 'BEGIN{f=0} $0==hdr{f=1} f && /^Image=/{found=1} END{exit !found}' "$PLASMALOGIN_CONF"; then
-                sudo sed -i "\|^\[Greeter\]\[Wallpaper\]\[org\.kde\.image\]\[General\]\$|,/^\[/{s|^Image=.*|Image=$GREETER_WALLPAPER_URI|}" "$PLASMALOGIN_CONF" || true
-            else
-                sudo sed -i "\|^\[Greeter\]\[Wallpaper\]\[org\.kde\.image\]\[General\]\$|a Image=$GREETER_WALLPAPER_URI" "$PLASMALOGIN_CONF" || true
-            fi
-        else
-            printf '\n%s\nImage=%s\n' "$SECTION_HEADER" "$GREETER_WALLPAPER_URI" | sudo tee -a "$PLASMALOGIN_CONF" > /dev/null
-        fi
+        set_kde_ini_key "$PLASMALOGIN_CONF" "[Greeter][Wallpaper][org.kde.image][General]" "Image" "$GREETER_WALLPAPER_URI" 1
     fi
-    sudo chmod 644 "$PLASMALOGIN_CONF" || true
 fi
 
 TARGET_DIR="$HOME/.local/share/wallpapers"
 mkdir -p "$TARGET_DIR"
 
-show_progress 8 $TOTAL_STEPS "$MSG_OPTIMIZE"
+show_progress 6 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
 # ==========================================================
 # 4. KONFIGURACJA WIZUALNA (KONTO UŻYTKOWNIKA)
 # ==========================================================
 systemctl --user stop plasma-plasmashell.service 2>/dev/null || true
-kquitapp6 plasmashell 2>/dev/null || killall -9 plasmashell 2>/dev/null || true
+kquitapp6 plasmashell 2>/dev/null || killall -9 plasmashell 2>/dev/null || pkill -9 -u "$CURRENT_USER" -x plasmashell 2>/dev/null || true
 sleep 2
 
-show_progress 9 $TOTAL_STEPS "$MSG_OPTIMIZE"
+show_progress 7 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
-if [[ -d "$SCRIPT_DIR/.config" ]]; then cp -af "$SCRIPT_DIR/.config/." ~/.config/; fi
-if [[ -d "$SCRIPT_DIR/.local" ]]; then cp -af "$SCRIPT_DIR/.local/." ~/.local/; fi
-if [[ -d "$SCRIPT_DIR/.icons" ]]; then cp -af "$SCRIPT_DIR/.icons/." ~/.icons/; fi
+safe_copy_dir() {
+    local src="$1" dst="$2"
+    if [[ -d "$src" ]] && [[ "$(realpath "$src" 2>/dev/null)" != "$(realpath "$dst" 2>/dev/null)" ]]; then
+        mkdir -p "$dst" 2>/dev/null || return 0
+        cp -af "$src/." "$dst/" 2>/dev/null || true
+    fi
+    return 0
+}
+
+safe_copy_dir "$SCRIPT_DIR/.config" "$HOME/.config"
+safe_copy_dir "$SCRIPT_DIR/.local" "$HOME/.local"
+safe_copy_dir "$SCRIPT_DIR/.icons" "$HOME/.icons"
 
 LOCKSCREEN_CONF="$HOME/.config/kscreenlockerrc"
 LOCKSCREEN_WALLPAPER_PATH="$HOME/.local/share/wallpapers/lock_screen.jpg"
 LOCKSCREEN_WALLPAPER_URI="file://$LOCKSCREEN_WALLPAPER_PATH"
 
 if [[ -f "$LOCKSCREEN_WALLPAPER_PATH" ]]; then
+    mkdir -p "$(dirname "$LOCKSCREEN_CONF")"
     touch "$LOCKSCREEN_CONF"
     if command -v kwriteconfig6 &>/dev/null; then
         kwriteconfig6 --file "$LOCKSCREEN_CONF" \
             --group Greeter --group Wallpaper --group org.kde.image --group General \
             --key Image "$LOCKSCREEN_WALLPAPER_URI" || true
+        chmod 644 "$LOCKSCREEN_CONF" || true
     else
-        SECTION_HEADER="[Greeter][Wallpaper][org.kde.image][General]"
-        if grep -qF "$SECTION_HEADER" "$LOCKSCREEN_CONF" 2>/dev/null; then
-            if awk -v hdr="$SECTION_HEADER" 'BEGIN{f=0} $0==hdr{f=1} f && /^Image=/{found=1} END{exit !found}' "$LOCKSCREEN_CONF"; then
-                sed -i "\|^\[Greeter\]\[Wallpaper\]\[org\.kde\.image\]\[General\]\$|,/^\[/{s|^Image=.*|Image=$LOCKSCREEN_WALLPAPER_URI|}" "$LOCKSCREEN_CONF" || true
-            else
-                sed -i "\|^\[Greeter\]\[Wallpaper\]\[org\.kde\.image\]\[General\]\$|a Image=$LOCKSCREEN_WALLPAPER_URI" "$LOCKSCREEN_CONF" || true
-            fi
-        else
-            printf '\n%s\nImage=%s\n' "$SECTION_HEADER" "$LOCKSCREEN_WALLPAPER_URI" >> "$LOCKSCREEN_CONF"
-        fi
+        set_kde_ini_key "$LOCKSCREEN_CONF" "[Greeter][Wallpaper][org.kde.image][General]" "Image" "$LOCKSCREEN_WALLPAPER_URI" 0
     fi
-    chmod 644 "$LOCKSCREEN_CONF" || true
 fi
 
-show_progress 10 $TOTAL_STEPS "$MSG_OPTIMIZE"
+show_progress 8 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
-rm -rf ~/.cache/icon-cache.kcache ~/.cache/plasma* ~/.cache/ico*
+rm -rf "$HOME/.cache/icon-cache.kcache" "$HOME/.cache/icon-cache"* "$HOME/.cache/plasma"*
 
 WALLPAPER_PATH="$HOME/.local/share/wallpapers/wallpaper.jpg"
 AUTOSTART_DIR="$HOME/.config/autostart"
-mkdir -p "$AUTOSTART_DIR"
+HELPER_BIN_DIR="$HOME/.local/bin"
+HELPER_SCRIPT="$HELPER_BIN_DIR/force-wallpaper.sh"
 
-cat > "$AUTOSTART_DIR/force-wallpaper.desktop" <<EOF
+if [[ -f "$WALLPAPER_PATH" ]]; then
+    mkdir -p "$AUTOSTART_DIR" "$HELPER_BIN_DIR"
+    cat > "$HELPER_SCRIPT" <<EOF
+#!/usr/bin/env bash
+for i in {1..30}; do
+    if command -v plasma-apply-wallpaperimage >/dev/null 2>&1 && plasma-apply-wallpaperimage "$WALLPAPER_PATH"; then
+        rm -f "$AUTOSTART_DIR/force-wallpaper.desktop" "$HELPER_SCRIPT"
+        exit 0
+    fi
+    sleep 2
+done
+EOF
+    chmod 755 "$HELPER_SCRIPT"
+
+    cat > "$AUTOSTART_DIR/force-wallpaper.desktop" <<EOF
 [Desktop Entry]
 Type=Application
 Name=Wymuszenie Tapety
-Exec=bash -c 'for i in {1..30}; do plasma-apply-wallpaperimage "$WALLPAPER_PATH" && rm -f "$AUTOSTART_DIR/force-wallpaper.desktop" && break; sleep 2; done'
+Exec="$HELPER_SCRIPT"
 Hidden=false
 NoDisplay=true
 X-KDE-autostart-condition=
 EOF
-chmod +x "$AUTOSTART_DIR/force-wallpaper.desktop"
+    chmod 644 "$AUTOSTART_DIR/force-wallpaper.desktop"
+fi
 
-show_progress 11 $TOTAL_STEPS "$MSG_OPTIMIZE"
+show_progress 9 $TOTAL_STEPS "$MSG_OPTIMIZE"
 
 if command -v kbuildsycoca6 &>/dev/null; then
     kbuildsycoca6 --noincremental &>/dev/null || true
@@ -494,12 +597,12 @@ fi
 # 5. ZAKOŃCZENIE I SPRZĄTANIE
 # ==========================================================
 
-show_progress 12 $TOTAL_STEPS "$MSG_FINALIZE"
+show_progress 10 $TOTAL_STEPS "$MSG_FINALIZE"
 printf '\n\n' >&3
 
 if [[ ${#FAILED_PACKAGES[@]} -gt 0 ]]; then
-    log_warn "Nie udało się zainstalować: ${FAILED_PACKAGES[*]}" \
-             "Failed to install: ${FAILED_PACKAGES[*]}"
+    log_warn "Nie udało się zainstalować: ${FAILED_PACKAGES[*]}. Sprawdź log: $LOG_FILE" \
+             "Failed to install: ${FAILED_PACKAGES[*]}. Check the log: $LOG_FILE"
 fi
 
 if [[ "$SCRIPT_LANG" == "pl" ]]; then
