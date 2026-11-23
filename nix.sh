@@ -276,7 +276,7 @@ if [[ "$HAS_LOGIN_WALLPAPER" -eq 1 && -e /etc/plasmalogin.conf && ! -L /etc/plas
     sudo rm -f /etc/plasmalogin.conf
 fi
 
-show_progress 1 $TOTAL_STEPS "$MSG_OPTIMIZE"
+show_progress 1 $TOTAL_STEPS "$MSG_INSTALL"
 
 if ! sudo nixos-rebuild switch; then
     sudo cp -f "$NIXOS_CONF.bak" "$NIXOS_CONF"
@@ -408,15 +408,15 @@ EOF
     chmod 644 "$AUTOSTART_DIR/force-wallpaper.desktop"
 fi
 
-show_progress 4 $TOTAL_STEPS "$MSG_OPTIMIZE"
+# ==========================================================
+# 4. ZAKOŃCZENIE I SPRZĄTANIE
+# ==========================================================
+
+show_progress 4 $TOTAL_STEPS "$MSG_FINALIZE"
 
 if command -v kbuildsycoca6 &>/dev/null; then
     kbuildsycoca6 --noincremental &>/dev/null || true
 fi
-
-# ==========================================================
-# 4. ZAKOŃCZENIE I SPRZĄTANIE
-# ==========================================================
 
 show_progress 5 $TOTAL_STEPS "$MSG_FINALIZE"
 printf '\n\n' >&3

@@ -587,15 +587,26 @@ EOF
     chmod 644 "$AUTOSTART_DIR/force-wallpaper.desktop"
 fi
 
-show_progress 9 $TOTAL_STEPS "$MSG_OPTIMIZE"
+# ==========================================================
+# 5. ZAKOŃCZENIE I SPRZĄTANIE
+# ==========================================================
+
+show_progress 9 $TOTAL_STEPS "$MSG_FINALIZE"
 
 if command -v kbuildsycoca6 &>/dev/null; then
     kbuildsycoca6 --noincremental &>/dev/null || true
 fi
 
-# ==========================================================
-# 5. ZAKOŃCZENIE I SPRZĄTANIE
-# ==========================================================
+if [[ "$DISTRO_FAMILY" == "void" ]]; then
+    for svc in dhcpcd wpa_supplicant; do
+        [[ -L "/var/service/$svc" ]] && sudo rm -f "/var/service/$svc" || true
+    done
+    for svc in dbus NetworkManager bluetoothd sddm; do
+        if [[ -d "/etc/sv/$svc" && ! -e "/var/service/$svc" ]]; then
+            sudo ln -s "/etc/sv/$svc" "/var/service/$svc" || true
+        fi
+    done
+fi
 
 show_progress 10 $TOTAL_STEPS "$MSG_FINALIZE"
 printf '\n\n' >&3
@@ -609,17 +620,6 @@ if [[ "$SCRIPT_LANG" == "pl" ]]; then
     echo -e "${SUCCESS}[OK] KONFIGURACJA ZAKOŃCZONA SUKCESEM!${NC}" >&3
 else
     echo -e "${SUCCESS}[OK] CONFIGURATION COMPLETED SUCCESSFULLY!${NC}" >&3
-fi
-
-if [[ "$DISTRO_FAMILY" == "void" ]]; then
-    for svc in dhcpcd wpa_supplicant; do
-        [[ -L "/var/service/$svc" ]] && sudo rm -f "/var/service/$svc" || true
-    done
-    for svc in dbus NetworkManager bluetoothd sddm; do
-        if [[ -d "/etc/sv/$svc" && ! -e "/var/service/$svc" ]]; then
-            sudo ln -s "/etc/sv/$svc" "/var/service/$svc" || true
-        fi
-    done
 fi
 
 DO_REBOOT=1
