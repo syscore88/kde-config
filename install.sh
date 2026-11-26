@@ -319,7 +319,7 @@ case "$DISTRO_FAMILY" in
             plasma-workspace plasma-desktop kwin xorg-server-xwayland
             plasma-firewall plasma-nm plasma-pa kscreen bluedevil
             kde-gtk-config kinfocenter kio-admin kdeplasma-addons
-            aspell-pl kaccounts-providers dolphin konsole
+            aspell-pl kaccounts-providers accountsservice dolphin konsole
             dolphin-plugins spectacle gwenview okular ark kate
             plasma-systemmonitor kcalc kup bup krdc krfb pulseaudio-utils rtkit
         )
@@ -458,9 +458,6 @@ set_kde_ini_key() {
 }
 
 if [[ -f "$SCRIPT_DIR/piwo.png" ]]; then
-    install -m 644 "$SCRIPT_DIR/piwo.png" "$HOME/.face" 2>/dev/null || true
-    install -m 644 "$SCRIPT_DIR/piwo.png" "$HOME/.face.icon" 2>/dev/null || true
-
     sudo mkdir -p /usr/share/plasma/avatars || true
     sudo install -m 644 -o root -g root "$SCRIPT_DIR/piwo.png" /usr/share/plasma/avatars/piwo.png || true
 
